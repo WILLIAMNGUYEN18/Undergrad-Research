@@ -9,6 +9,7 @@ in vec3 vdepth;
 in vec3 vpos;
 
 in vec3 spot;
+//spotlight input vector
 
 uniform float exposure;
 uniform vec4 pointlight;
@@ -37,6 +38,30 @@ void main() {
     specular /= r*r;
     colorrgb += specular;
     
+    //Will move ambient below until after testing/review
+    //input S as a vec3 (ASSUME S is normalized)
+    //give arbitrary values to a,b,c
+    //float a = 1;
+    //float b = 1;
+    //float c = 1;
+    //a, b, c, and distance falloff unnecessary since already calculated for specular and diffuse that are being multiplied
+    
+    //if angle between L and S (alpha) <= cutoff angle for spotlight (beta)
+    //follow through, otherwise, ldotspot == 0
+    //remember to normalize l (assume s is normalized)
+    //angle between L and S --> cos^-1 (l/r dot spot)/(r* length(spot))
+    
+    float alpha = acos(dot( l / r, spot)/(r * length(s)));    
+    float ldotspot = 0;
+
+    //the power of 5 (currently arbitrary) is the angular falloff coefficient
+    if(alpha <= ((3.1415926535897932384626433832795)/2)){
+    ldotspot = pow(dot(l, spot), 5);
+    }
+
+    //multiply by diffuse and specular
+    colorrgb *= ldotspot;
+
     //ambient component
     colorrgb += vec3(0.01, 0.01, 0.01);
     
