@@ -51,12 +51,13 @@ void main() {
     //remember to normalize l (assume s is normalized)
     //angle between L and S --> cos^-1 (l/r dot spot)/(r* length(spot))
     
-    float alpha = acos(dot( l / r, spot)/(r * length(s)));    
+    float alpha = acos(dot( l / r, spot));
+    //(r * length(spot))    
     float ldotspot = 0;
 
     //the power of 5 (currently arbitrary) is the angular falloff coefficient
     if(alpha <= ((3.1415926535897932384626433832795)/2)){
-    ldotspot = pow(dot(l, spot), 5);
+    ldotspot = pow(dot(l, spot), 5.0);
     }
 
     //multiply by diffuse and specular
