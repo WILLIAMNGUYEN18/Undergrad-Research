@@ -57,7 +57,7 @@ void main() {
 
     //the power of 5 (currently arbitrary) is the angular falloff coefficient
     if(alpha <= ((3.1415926535897932384626433832795)/2)){
-    ldotspot = pow(dot(l, spot), 5.0);
+    ldotspot = pow(dot(l/r, spot), 5.0);
     }
 
     //multiply by diffuse and specular
