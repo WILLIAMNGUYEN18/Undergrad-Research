@@ -20,6 +20,7 @@ void main() {
     vec3 bright = vec3(0,0,0);
     float pi = 3.1415926535897932384626433832795;
     float incdegree = pi / 12;
+    float incr = 0.1;
     vec3 z = vec3(0,0,1);
 
     //center point of area light based on pointlight vector
@@ -30,7 +31,7 @@ void main() {
     //vcolor copied from pass.f.glsl
     vec3 colorrgb = vec3(115.0/255.0, 161.0/255.0, 227.0/255.0);
 
-    for (float r = 0; r < rone; r+= 0.1){
+    for (float r = 0; r < rone; r+= incr){
         for(float theta = 0; theta < 2 * pi; theta += incdegree){
 
             //pp
@@ -56,37 +57,36 @@ void main() {
  
             //scale by area divided by number of samples
             //Light intensity calculation//pointlight[3] = inherent light intensity  
-            float intense = (pi * (pow(rone,2))) / ( (rone / 0.1)  *   ((2*pi) / incdegree) );
+            float intense = (pi * (pow(rone,2))) / ( (rone / incr)  *   ((2*pi) / incdegree) );
             intense *= pointlight[3] * dot(-l / length(l)), eone / length(eone)); 
 
-            //intensity is multiplied into equation
-            //Wpp *= intense;
-            
-            //equation is multiplied into rgb values
-            //colorrgb *= Wpp;
-            //colorrgb = clamp(colorrgb, 0.0, 1.0);
-            
+            vec3 change = vec3(Wpp[0] - vpos[0], Wpp[1] - vpos[1], Wpp[2] - vpos[2]);
 
             //diffuse highlight
             vec3 tmp = (normalize(vnormal));
-            colorrgb *= dot(tmp , l / length(l));
-            colorrgb /= length(l) * length(l);
+            colorrgb *= dot(tmp , change / length(change));
+            colorrgb /= length(change) * length(change);
             colorrgb = clamp(colorrgb, 0.0, 1.0);
 
 
             //phong specular highlight
-            float rscale = 2.0 * dot( l / r, tmp);
+            float rscale = 2.0 * dot( change / length(change), tmp);
             vec3 reflect = vec3(0.0, 0.0, 0.0);
-            if (rscale > 0.0) {	reflect = rscale * tmp - (l / r);}
+            if (rscale > 0.0) {	
+                reflect = rscale * tmp - (change / length(change));
+            }
             float rdotv = clamp(dot(reflect, - vpos / length(vpos)), 0.0, 1.0);
             float specular = 0.1 * clamp(pow(rdotv , 5.0) * pointlight[3], 0.0, 1.0);
-            specular /= r*r;
+            specular /= length(change) * length(change);
             colorrgb += specular;  
 
             //ambient component
-            colorrgb += vec3(0.01, 0.01, 0.01);
-    
+            colorrgb += vec3(0.01, 0.01, 0.01);    
             colorrgb = clamp(colorrgb, 0.0, 1.0);
+
+            //multiply by the scaled intensity
+            colorrgb *= intense
+
             //add shaded region to bright
             bright += colorrgb;
         }
