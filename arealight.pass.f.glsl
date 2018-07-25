@@ -36,6 +36,7 @@ void main() {
 
     //vcolor copied from pass.f.glsl
     vec3 colorrgb = vec3(115.0/255.0, 161.0/255.0, 227.0/255.0);
+    colorrgb = clamp(colorrgb, 0.0, 1.0);
 
     for (float r = 0; r < rone; r+= 0.01){
         for(float theta = 0; theta < 2 * pi; theta += incdegree){
@@ -59,29 +60,18 @@ void main() {
                 + normalize(cross(plane/length(plane), pp/ length(pp)))
                 + plane * (dot(plane / length(plane),pp / length(pp))) * (1-cos(rot)) )
             + lpos;
-
-            //pointlight is now center of area light
-            //summing up contribution of samples of area light
-            //point light position for calculation is 
-
+ 
             //scale by area divided by number of samples
-            //total of loop / increment
-            //for both 
             //Light intensity calculation//pointlight[3] = inherent light intensity  
-            float intense = pointlight[3] * dot(-lpos / length(lpos)), eone / length(eone)) 
-                * (pi * (pow(rone,2)));
-
-            intense /= ( (rone / 0.01)  *   ((2*pi) / incdegree) );
+            float intense = (pi * (pow(rone,2))) / ( (rone / 0.01)  *   ((2*pi) / incdegree) );
+            intense *= pointlight[3] * dot(-lpos / length(lpos)), eone / length(eone)); 
 
             //intensity is multiplied into equation
             Wpp *= intense;
             
             //equation is multiplied into rgb values
             colorrgb *= Wpp;
-
-
-            //Do all the same calculations (specular, diffuse, ambient)
-            //shade pixel
+            colorrgb = clamp(colorrgb, 0.0, 1.0);
 
             //diffuse highlight
             vec3 tmp = (normalize(vnormal));
