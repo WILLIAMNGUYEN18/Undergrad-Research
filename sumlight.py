@@ -34,17 +34,52 @@ def test1(alpha, beta):
 a = 0
 b = math.pi
 
-#range for psi
+#range for phi
+#def gfun ():
+#    return 0
 gfun = 0
+
+#def hfun ():
+#    return math.pi
 hfun = 2 * math.pi
 
+#arbitrarily set w
+w = 1
 
-#scipy.integrate.dblquad(func, a, b, gfun, hfun
+#setting here initially so that they don't need to be passed to functions
+alpha = 0
+beta = 0
+
+#scipy.integrate.dblquad(func, a, b, gfun, hfun)
+#func(y, x) from x = a..b and y = gfun(x)..hfun(x).
 #1st parameter func 
-def func (theta, psi):
+#, alpha, beta
+def func (phi, theta):
     return math.cos(theta) * Rect(alpha - theta / w) * Rect(beta - theta /w)
 
-integrate.dblquad(func, a, b,gfun, hfun)
+#phi, theta, alpha, beta, params removed
+def usef(a, b, gfun, hfun):
+    return integrate.dblquad(func, a, b,gfun, hfun)
+
+#do we need io?
+
+#plug arbitrary input values for alpha beta currently.
+
+#need to sample (Step sampling for alpha and beta for the above function)
+#alpha sampled from 0 - pi, and beta from 0 to 2pi
+#after sampling, plot the function (matplotlib?)
+
+step = math.pi/12
+sampleset = list()
+#will need  to check if alpha/beta looping her works, or if necessary to do while loop
+for alpha in range(0, math.pi, step):
+    for beta in range ( 0, 2* math.pi, step):
+        #need to figure out how to work with 4-variable function
+        temp = usef( a, b, gfun, hfun)
+        print(temp)
+        sampleset.append(temp)
+        
+
 
 
 
