@@ -28,25 +28,22 @@ print("Defining Functions")
 #1st parameter func 
 #, alpha, beta
 
-#check order of integrals
+#integrate over cos(theta)d(theta)d(phi)
+#phi has much greater effect
+#cos(theta) gives more weight
+
+#function of equation inside double integral
 def func (phi, theta, alpha, beta):
     return math.cos(theta) * Rect((alpha - theta) / w) * Rect((beta - phi) /w)
 
-#phi, theta, alpha, beta, params removed
+#function to calculate convolution
 def usef(a, b, gfun, hfun, alpha, beta):
     return integrate.dblquad(func, a, b,gfun, hfun, args = (alpha, beta))
 
-#do we need io?
 
-#plug arbitrary input values for alpha beta currently.
-
-#need to sample (Step sampling for alpha and beta for the above function)
-#alpha sampled from 0 - pi, and beta from 0 to 2pi
-#after sampling, plot the function (matplotlib?)
-
-
+#rectangle function
 def Rect(n):
-    if n < 1/2.0 and n > -1/2.0:
+    if n <= 1/2.0 and n >= -1/2.0:
         return 1.0
     else:
         return 0.0
@@ -63,8 +60,8 @@ def Rect(n):
 print("Hardcoding values")
 #range for theta
 a = 0.0
-b = 2.0 * math.pi
-
+#b = 2.0 * math.pi
+b = math.pi / 2.0
 #range for phi
 #def gfun ():
 #    return 0
@@ -72,29 +69,30 @@ gfun = 0.0
 
 #def hfun ():
 #    return math.pi
-hfun =  math.pi / 2.0
-
+#hfun =  math.pi / 2.0
+hfun = 2.0 * math.pi
 #arbitrarily set w
-w = 1.0
+w = math.pi / 24.0
+#w = 1
 
 #setting here initially so that they don't need to be passed to functions
 step = math.pi/12.0
 sampleset = []
-counter = 0
 spreada = []
 spreadb = []
 print('Calculating convolutions over alpha and beta')
 #will need  to check if alpha/beta looping her works, or if necessary to do while loop
 #separate alpha and beta from the iterators and use integer iterators
+
+astep = 48.0
+bstep = 48.0
 alpha = 0.0
-astep = 12.0
-bstep = 12.0
-while alpha < math.pi / 2.0:
+while alpha <= math.pi / 2.0:
     spreada.append(alpha)
     #print('alpha: ' + str(alpha))
     beta = 0
     #beta reset for each alpha
-    while beta < (2.0 * math.pi):
+    while beta <= (2.0 * math.pi):
         #need to figure out how to work with 4-variable function
         temp = usef(a, b, gfun, hfun, alpha, beta)[0]
         sampleset.append(temp)
@@ -105,6 +103,21 @@ while alpha < math.pi / 2.0:
         beta += math.pi / bstep
     alpha += math.pi / astep
 print('Plotting Graph')
+
+#beta = 0
+#while beta <= (2.0 * math.pi):
+#    spreadb.append(beta)
+#    alpha = 0
+#    while(alpha <= math.pi / 2.0):
+#        temp = usef(a, b, gfun, hfun, alpha, beta)[0]
+#        sampleset.append(temp)
+#        #print('beta: ' + str(beta))
+#        print('convolution ' + str(temp))
+#        if (beta == 0.0):
+#            spreada.append(alpha)
+#        alpha += math.pi / astep
+#    beta += math.pi / bstep 
+
 
 #ax.plot3D(xline, yline, zline, 'gray')
 #plt.plot(spread, sampleset)
