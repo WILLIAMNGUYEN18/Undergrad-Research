@@ -1,6 +1,10 @@
+# importing the required module
 from scipy import integrate
 from scipy.integrate import quad, dblquad
 import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits import mplot3d
 #msg = "test123"
 #print(msg)
 
@@ -14,6 +18,26 @@ import math
 # example return
 # def f(x):
 #    return x*x
+print("Defining Functions")
+#scipy.integrate.dblquad(func, a, b, gfun, hfun)
+#func(y, x) from x = a..b and y = gfun(x)..hfun(x).
+#1st parameter func 
+#, alpha, beta
+def func (phi, theta):
+    return math.cos(theta) * Rect(alpha - theta / w) * Rect(beta - theta /w)
+
+#phi, theta, alpha, beta, params removed
+def usef(a, b, gfun, hfun):
+    return integrate.dblquad(func, a, b,gfun, hfun)
+
+#do we need io?
+
+#plug arbitrary input values for alpha beta currently.
+
+#need to sample (Step sampling for alpha and beta for the above function)
+#alpha sampled from 0 - pi, and beta from 0 to 2pi
+#after sampling, plot the function (matplotlib?)
+
 
 def Rect(n):
     if n < 1/2 and n > -1/2:
@@ -23,13 +47,14 @@ def Rect(n):
 
 
 #might not do alpha beta, may have to use the 2 range variables used in double variable.
-def test1(alpha, beta):
-    print ("fuck")
+#def test1(alpha, beta):
+#   print ("fuck")
     #return math.cos(theta) * Rect((alpha - theta)/w) * Rect((beta - theta)/w)
     #math.cos(theta)
     #need to pull theta somehow
     #print("turn this into necessary function")
 
+print("Hardcoding values")
 #range for theta
 a = 0
 b = math.pi
@@ -50,36 +75,36 @@ w = 1
 alpha = 0
 beta = 0
 
-#scipy.integrate.dblquad(func, a, b, gfun, hfun)
-#func(y, x) from x = a..b and y = gfun(x)..hfun(x).
-#1st parameter func 
-#, alpha, beta
-def func (phi, theta):
-    return math.cos(theta) * Rect(alpha - theta / w) * Rect(beta - theta /w)
-
-#phi, theta, alpha, beta, params removed
-def usef(a, b, gfun, hfun):
-    return integrate.dblquad(func, a, b,gfun, hfun)
-
-#do we need io?
-
-#plug arbitrary input values for alpha beta currently.
-
-#need to sample (Step sampling for alpha and beta for the above function)
-#alpha sampled from 0 - pi, and beta from 0 to 2pi
-#after sampling, plot the function (matplotlib?)
-
-step = math.pi/12
+step = math.pi//12
 sampleset = list()
+counter = 0
+spreada = list()
+spreadb = list()
+print('Calculating convolutions over alpha and beta')
 #will need  to check if alpha/beta looping her works, or if necessary to do while loop
-for alpha in range(0, math.pi, step):
-    for beta in range ( 0, 2* math.pi, step):
+while alpha < math.pi:
+    alpha += math.pi / 12
+    spreada.append(alpha)
+    while beta < (2 * math.pi):
         #need to figure out how to work with 4-variable function
-        temp = usef( a, b, gfun, hfun)
-        print(temp)
+        temp = usef(a, b, gfun, hfun)
         sampleset.append(temp)
-        
+        print('beta: ' + str(beta))
+        print('alpha: ' + str(alpha))
+        print('convolution ' + str(temp))
+        beta += math.pi / 12
+        spreadb.append(beta)
 
+print('Plotting Graph')
+
+#ax.plot3D(xline, yline, zline, 'gray')
+#plt.plot(spread, sampleset)
+#plt.xlabel('alpha&beta value')
+#plt.ylabel('convolution value')
+#plt.title('Convolution value across alpha&beta values')
+ax = plt.axes(projection='3d')
+ax.scatter3D(spreada, spreadb, sampleset,c = sampleset,cmap = 'gray')
+#plt.show()
 
 
 
