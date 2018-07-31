@@ -27,12 +27,14 @@ print("Defining Functions")
 #func(y, x) from x = a..b and y = gfun(x)..hfun(x).
 #1st parameter func 
 #, alpha, beta
-def func (phi, theta):
-    return math.cos(theta) * Rect(alpha - theta / w) * Rect(beta - theta /w)
+
+#check order of integrals
+def func (phi, theta, alpha, beta):
+    return math.cos(theta) * Rect((alpha - theta) / w) * Rect((beta - phi) /w)
 
 #phi, theta, alpha, beta, params removed
-def usef(a, b, gfun, hfun):
-    return integrate.dblquad(func, a, b,gfun, hfun)
+def usef(a, b, gfun, hfun, alpha, beta):
+    return integrate.dblquad(func, a, b,gfun, hfun, args = (alpha, beta))
 
 #do we need io?
 
@@ -44,10 +46,10 @@ def usef(a, b, gfun, hfun):
 
 
 def Rect(n):
-    if n < 1/2 and n > -1/2:
-        return 1
+    if n < 1/2.0 and n > -1/2.0:
+        return 1.0
     else:
-        return 0
+        return 0.0
 
 
 #might not do alpha beta, may have to use the 2 range variables used in double variable.
@@ -60,47 +62,48 @@ def Rect(n):
 
 print("Hardcoding values")
 #range for theta
-a = 0
-b = math.pi
+a = 0.0
+b = 2.0 * math.pi
 
 #range for phi
 #def gfun ():
 #    return 0
-gfun = 0
+gfun = 0.0
 
 #def hfun ():
 #    return math.pi
-hfun = 2 * math.pi
+hfun =  math.pi / 2.0
 
 #arbitrarily set w
-w = 1
+w = 1.0
 
 #setting here initially so that they don't need to be passed to functions
-alpha = 0
-step = math.pi//12
-sampleset = list()
+step = math.pi/12.0
+sampleset = []
 counter = 0
-spreada = list()
-spreadb = list()
+spreada = []
+spreadb = []
 print('Calculating convolutions over alpha and beta')
 #will need  to check if alpha/beta looping her works, or if necessary to do while loop
 #separate alpha and beta from the iterators and use integer iterators
-while alpha < math.pi:
-    alpha += math.pi / 12
+alpha = 0.0
+astep = 12.0
+bstep = 12.0
+while alpha < math.pi / 2.0:
     spreada.append(alpha)
-    print('alpha: ' + str(alpha))
-
-    #beta reset for each alpha
+    #print('alpha: ' + str(alpha))
     beta = 0
-    while beta < (2 * math.pi):
+    #beta reset for each alpha
+    while beta < (2.0 * math.pi):
         #need to figure out how to work with 4-variable function
-        temp = usef(a, b, gfun, hfun)
+        temp = usef(a, b, gfun, hfun, alpha, beta)[0]
         sampleset.append(temp)
-        print('beta: ' + str(beta))
+        #print('beta: ' + str(beta))
         print('convolution ' + str(temp))
-        beta += math.pi / 12
-        spreadb.append(beta)
-
+        if (alpha == 0.0): 
+            spreadb.append(beta)
+        beta += math.pi / bstep
+    alpha += math.pi / astep
 print('Plotting Graph')
 
 #ax.plot3D(xline, yline, zline, 'gray')
@@ -120,7 +123,14 @@ print ('premesh x: ' + str(len(spreada)))
 print ('premesh y: ' + str(len(spreadb)))
 print ('premesh z: ' + str(len(sampleset)))
 #X,Y,Z = np.meshgrid(spreada, spreadb, sampleset)
+print (len(sampleset))
 X,Y = np.meshgrid(spreada, spreadb)
+print (X.shape)
+print (Y.shape)
+Z = np.reshape(np.array(sampleset), (len(spreada), len(spreadb)))
+Z = np.transpose(Z)
+#Z 2d array such that 
+print (Z.shape)
 
 print ('mesh x: ' + str(len(X)))
 print ('mesh y: ' + str(len(Y)))
@@ -128,21 +138,23 @@ print ('mesh z: ' + str(len(sampleset)))
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
-xi = np.linspace(0, math.pi, num = 10)
-yi = np.linspace(0, 2*math.pi, num = 22)
+#xi = np.linspace(0, math.pi, num = 10)
+#yi = np.linspace(0, 2*math.pi, num = 22)
 #zi = matplotlib.mlab.griddata(X, Y, Z, xi, yi, interp='linear')
 #https://stackoverflow.com/questions/21132758/scipy-interpolation-valueerror-x-and-y-arrays-must-be-equal-in-length-along-int
 #not 1D arrays
 #np.asarray(a).shape
 #squeeze()
-X.flatten()
-Y.flatten()
+#X.flatten()
+#Y.flatten()
 
-print(np.asarray(X).shape)
-print(np.asarray(Y).shape)
-print(np.asarray(np.asarray(sampleset).flatten()))
+#print(np.asarray(X).shape)
+#print(np.asarray(Y).shape)
+#print(np.asarray(np.asarray(sampleset).flatten(order = 'F')))
 
-zi = matplotlib.mlab.griddata(X, Y, np.asarray(sampleset), xi, yi, interp='linear')
+#zi = matplotlib.mlab.griddata(X, Y, np.asarray(sampleset).flatten, xi, yi, interp='linear')
+#zi = matplotlib.mlab.griddata(xi, yi, np.asarray(sampleset).flatten, xi, yi, interp='linear')
+
 #print (str(len(zi)))
 
 #https://docs.scipy.org/doc/numpy/reference/generated/numpy.reshape.html
@@ -150,6 +162,6 @@ zi = matplotlib.mlab.griddata(X, Y, np.asarray(sampleset), xi, yi, interp='linea
 #ax.plot_surface(X.reshape(4,3), Y.reshape(4,3), Z.reshape(4,3))
 #ax.plot_surface(X.reshape(4,3), Y.reshape(4,3), np.asarray(sampleset).reshape(4,3))
 #ax.plot_surface(X, Y, zi)
-ax.plot_surface(xi, yi, zi)
-
+#ax.plot_surface(xi, yi, zi)
+ax.plot_surface(X,Y,Z)
 plt.show()
