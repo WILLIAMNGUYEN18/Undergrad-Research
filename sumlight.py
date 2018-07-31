@@ -5,6 +5,10 @@ import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+import numpy as np
+import matplotlib.mlab
 #msg = "test123"
 #print(msg)
 
@@ -73,8 +77,6 @@ w = 1
 
 #setting here initially so that they don't need to be passed to functions
 alpha = 0
-beta = 0
-
 step = math.pi//12
 sampleset = list()
 counter = 0
@@ -82,15 +84,19 @@ spreada = list()
 spreadb = list()
 print('Calculating convolutions over alpha and beta')
 #will need  to check if alpha/beta looping her works, or if necessary to do while loop
+#separate alpha and beta from the iterators and use integer iterators
 while alpha < math.pi:
     alpha += math.pi / 12
     spreada.append(alpha)
+    print('alpha: ' + str(alpha))
+
+    #beta reset for each alpha
+    beta = 0
     while beta < (2 * math.pi):
         #need to figure out how to work with 4-variable function
         temp = usef(a, b, gfun, hfun)
         sampleset.append(temp)
         print('beta: ' + str(beta))
-        print('alpha: ' + str(alpha))
         print('convolution ' + str(temp))
         beta += math.pi / 12
         spreadb.append(beta)
@@ -102,11 +108,48 @@ print('Plotting Graph')
 #plt.xlabel('alpha&beta value')
 #plt.ylabel('convolution value')
 #plt.title('Convolution value across alpha&beta values')
-ax = plt.axes(projection='3d')
-ax.scatter3D(spreada, spreadb, sampleset,c = sampleset,cmap = 'gray')
-#plt.show()
 
+#3d graph default needs vertices.
+#https://stackoverflow.com/questions/44355270/plot-3d-in-python-using-three-lists
 
+#ax = plt.axes(projection='3d')
+#ax.scatter3D(spreada, spreadb, sampleset,c = sampleset,cmap = 'gray')
+#X,Y,Z = np.meshgrid(X,Y,Z)
+#https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.meshgrid.html
+print ('premesh x: ' + str(len(spreada)))
+print ('premesh y: ' + str(len(spreadb)))
+print ('premesh z: ' + str(len(sampleset)))
+#X,Y,Z = np.meshgrid(spreada, spreadb, sampleset)
+X,Y = np.meshgrid(spreada, spreadb)
 
+print ('mesh x: ' + str(len(X)))
+print ('mesh y: ' + str(len(Y)))
+print ('mesh z: ' + str(len(sampleset)))
+fig = plt.figure()
+ax = fig.gca(projection='3d')
 
+xi = np.linspace(0, math.pi, num = 10)
+yi = np.linspace(0, 2*math.pi, num = 22)
+#zi = matplotlib.mlab.griddata(X, Y, Z, xi, yi, interp='linear')
+#https://stackoverflow.com/questions/21132758/scipy-interpolation-valueerror-x-and-y-arrays-must-be-equal-in-length-along-int
+#not 1D arrays
+#np.asarray(a).shape
+#squeeze()
+X.flatten()
+Y.flatten()
 
+print(np.asarray(X).shape)
+print(np.asarray(Y).shape)
+print(np.asarray(np.asarray(sampleset).flatten()))
+
+zi = matplotlib.mlab.griddata(X, Y, np.asarray(sampleset), xi, yi, interp='linear')
+#print (str(len(zi)))
+
+#https://docs.scipy.org/doc/numpy/reference/generated/numpy.reshape.html
+#need different scale than 4,3
+#ax.plot_surface(X.reshape(4,3), Y.reshape(4,3), Z.reshape(4,3))
+#ax.plot_surface(X.reshape(4,3), Y.reshape(4,3), np.asarray(sampleset).reshape(4,3))
+#ax.plot_surface(X, Y, zi)
+ax.plot_surface(xi, yi, zi)
+
+plt.show()
