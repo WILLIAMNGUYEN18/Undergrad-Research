@@ -131,15 +131,25 @@ print('Plotting Graph')
 #ax.scatter3D(spreada, spreadb, sampleset,c = sampleset,cmap = 'gray')
 #X,Y,Z = np.meshgrid(X,Y,Z)
 #https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.meshgrid.html
+
+#Looking at the default lengths of these lists
+#x is 12 from pi/2 incremented by pi/24 ()
+#y is 49 from 2pi incremented by pi/24 (inclusive)
+#z is the sample set of across x and y (12 * 49 = 588)
 print ('premesh x: ' + str(len(spreada)))
 print ('premesh y: ' + str(len(spreadb)))
 print ('premesh z: ' + str(len(sampleset)))
 #X,Y,Z = np.meshgrid(spreada, spreadb, sampleset)
 print (len(sampleset))
+
+#Making matrices from spreada and spreadb arrays
+#effectively making the grid of x and y (bringing y to 49)
 X,Y = np.meshgrid(spreada, spreadb)
 print (X.shape)
 print (Y.shape)
+#reshaping the sampleset to match the grid arrangment of spreada (x) and spreadb(y)
 Z = np.reshape(np.array(sampleset), (len(spreada), len(spreadb)))
+#transposing z to match the alpha and beta iteration.
 Z = np.transpose(Z)
 #Z 2d array such that 
 print (Z.shape)
