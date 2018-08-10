@@ -36,13 +36,13 @@ print("Defining Functions")
 #phi has much greater effect
 #cos(theta) gives more weight
 
+
 #math.cos(w) = sin(theta) * sin(alpha) * cos(phi) * cos(beta) + sin(theta) * sin(phi) * sin(alpha) * sin(beta) + cos(theta) * cos(alpha)
 #function of equation inside double integral
 def func (phi, theta, alpha, beta):
     return (math.sin(theta) * math.sin(alpha) * math.cos(phi) * math.cos(beta) 
     + math.sin(theta) * math.sin(phi) * math.sin(alpha) * math.sin(beta) 
-    + math.cos(theta) * math.cos(alpha)) 
-    * Rect(theta)
+    + math.cos(theta) * math.cos(alpha)) * Rect(theta/w) * math.sin(theta)
 
 #function to calculate convolution
 def usef(a, b, gfun, hfun, alpha, beta):
@@ -51,7 +51,7 @@ def usef(a, b, gfun, hfun, alpha, beta):
 
 #rectangle function
 def Rect(n):
-    if n >= 1:
+    if n <= 1:
         return 1.0
     else:
         return 0.0
@@ -175,5 +175,8 @@ ax = fig.gca(projection='3d')
 #ax.plot_surface(X.reshape(4,3), Y.reshape(4,3), np.asarray(sampleset).reshape(4,3))
 #ax.plot_surface(X, Y, zi)
 #ax.plot_surface(xi, yi, zi)
+ax.set_xlabel('Alpha Axis')
+ax.set_ylabel('Beta Axis')
+ax.set_zlabel('Convolution Axis')
 ax.plot_surface(X,Y,Z)
 plt.show()
