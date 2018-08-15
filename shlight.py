@@ -53,6 +53,27 @@ print("Defining Functions")
 #azimuthal angle is vert xz or yz
 #polar is horizontal xy
 
+#Will need to adjust theta for my model?
+theta = np.linspace(0, np.pi / 2, 48)
+#phi may be fine as it becomes a non-factor?
+phi = np.linspace(0, 2 * np.pi, 48)
+theta, phi = np.meshgrid(theta, phi)
+
+#will need to adjust these
+rectphi = 0
+recttheta = 0
+cosphi= 0
+costheta = 0
+#3rd order --> m = 3; l <= m
+m = 3
+l = 3
+
+w = np.pi / 24
+
+sph_harm(m,l, phi, theta).real
+
+#need to mutliply spherical harmonic of cos(theta) by the spherical harmonic of Rect(theta/w)
+#will probably need multiple phi and thetas
 
 #rectangle function
 def Rect(n):
