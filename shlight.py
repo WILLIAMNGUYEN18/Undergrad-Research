@@ -1,5 +1,6 @@
 # importing the required module
 from scipy import integrate
+from scipy import special
 from scipy.special import sph_harm
 from scipy.integrate import quad, dblquad
 import math
@@ -59,11 +60,6 @@ theta = np.linspace(0, np.pi / 2, 48)
 phi = np.linspace(0, 2 * np.pi, 48)
 theta, phi = np.meshgrid(theta, phi)
 
-#will need to adjust these
-rectphi = 0
-recttheta = 0
-cosphi= 0
-costheta = 0
 #3rd order --> m = 3; l <= m
 m = 3
 l = 3
@@ -72,8 +68,19 @@ w = np.pi / 24
 
 sph_harm(m,l, phi, theta).real
 
+
 #need to mutliply spherical harmonic of cos(theta) by the spherical harmonic of Rect(theta/w)
 #will probably need multiple phi and thetas
+
+#https://keisan.casio.com/has10/SpecExec.cgi?path=08000000.Special%2520Function%252F07001000.Orthogonal%2520polynomial%252F10010100.Spherical%2520harmonics%252Fdefault.xml&charset=utf-8
+
+#phi will be based on how many degrees the vector (x1,y1,z1) deviates from x (or y) on the xy plane
+#theta will be based on how many degrees the vector (x1,y1,z1) deviates from the the z vector (0,0,1)
+
+#need to have 2 sets of x,y,z values for the two different vectors.
+#this will be done through calculating the x,y,z as theta and phi
+
+
 
 #rectangle function
 def Rect(n):
