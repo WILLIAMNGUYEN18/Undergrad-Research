@@ -36,14 +36,14 @@ print("Defining Functions")
 #phi has much greater effect
 #cos(theta) gives more weight
 
-
 #math.cos(w) = sin(theta) * sin(alpha) * cos(phi) * cos(beta) + sin(theta) * sin(phi) * sin(alpha) * sin(beta) + cos(theta) * cos(alpha)
 #function of equation inside double integral
-def func (phi, theta, alpha, beta):
+def func (phi, theta, alpha, beta):   
     return (math.sin(theta) * math.sin(alpha) * math.cos(phi) * math.cos(beta) 
     + math.sin(theta) * math.sin(phi) * math.sin(alpha) * math.sin(beta) 
     + math.cos(theta) * math.cos(alpha)) * Rect(theta/w) * math.sin(theta)
 
+#multiplying by scopetheta here will not be effective.
 #function to calculate convolution
 def usef(a, b, gfun, hfun, alpha, beta):
     return integrate.dblquad(func, a, b,gfun, hfun, args = (alpha, beta))
@@ -73,6 +73,7 @@ hfun = 2.0 * math.pi
 #arbitrarily set w
 w = math.pi / 24.0
 #w = 1
+Area = (2 * np.pi * (1 - math.cos(w)))
 
 #setting here initially so that they don't need to be passed to functions
 step = math.pi/12.0
@@ -86,6 +87,7 @@ print('Calculating convolutions over alpha and beta')
 astep = 24.0
 bstep = 24.0
 alpha = 0.0
+
 while alpha <= math.pi / 2.0:
     spreada.append(alpha)
     #print('alpha: ' + str(alpha))
@@ -93,7 +95,7 @@ while alpha <= math.pi / 2.0:
     #beta reset for each alpha
     while beta <= (2.0 * math.pi):
         #need to figure out how to work with 4-variable function
-        temp = usef(a, b, gfun, hfun, alpha, beta)[0]
+        temp = usef(a, b, gfun, hfun, alpha, beta)[0] * 1/Area
         sampleset.append(temp)
         #print('beta: ' + str(beta))
         print('convolution ' + str(temp))
@@ -185,8 +187,24 @@ ax = fig.gca(projection='3d')
 #ax.plot_surface(X.reshape(4,3), Y.reshape(4,3), np.asarray(sampleset).reshape(4,3))
 #ax.plot_surface(X, Y, zi)
 #ax.plot_surface(xi, yi, zi)
-ax.set_xlabel('Alpha Axis')
-ax.set_ylabel('Beta Axis')
+
+#change alpha to azimuth
+ax.set_xlabel('Azimuth Axis')
+
+#change beta to zenith
+ax.set_ylabel('Zenith Axis')
+#lighting intensity due to
 ax.set_zlabel('Convolution Axis')
+ax.set_zlim(0,1)
+
+# Customize the z axis.
+#ax.set_zlim(-1, 1)
+#need to set same graph scale
 ax.plot_surface(X,Y,Z)
 plt.show()
+
+#2pi r h
+#r 1
+#h = (1 - cos)
+#2pi * (1 - cos(theta)) = A
+#scale each integral by 1/ A

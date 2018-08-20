@@ -1,7 +1,7 @@
 # importing the required module
 from scipy import integrate
 from scipy import special
-from scipy.special import sph_harm
+#from scipy.special import sph_harm
 from scipy.integrate import quad, dblquad
 import math
 import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 import matplotlib.mlab
+import pyshtools
 
 
 print("Defining Functions")
@@ -66,7 +67,7 @@ l = 3
 
 w = np.pi / 24
 
-sph_harm(m,l, phi, theta).real
+#sph_harm(m,l, phi, theta).real
 
 
 #need to mutliply spherical harmonic of cos(theta) by the spherical harmonic of Rect(theta/w)
@@ -79,6 +80,11 @@ sph_harm(m,l, phi, theta).real
 
 #need to have 2 sets of x,y,z values for the two different vectors.
 #this will be done through calculating the x,y,z as theta and phi
+#this might be done automatically through iterating through alpha beta
+
+#Do we need to skew corresponding to functions? If not, how are the functions included in the spherical harmonics? If so, how would we skew it?
+
+#take samples over the function?
 
 
 
@@ -113,10 +119,10 @@ while alpha <= math.pi / 2.0:
     #beta reset for each alpha
     while beta <= (2.0 * math.pi):
         #need to figure out how to work with 4-variable function
-        temp = usef(a, b, gfun, hfun, alpha, beta)[0]
-        sampleset.append(temp)
+        #temp = usef(a, b, gfun, hfun, alpha, beta)[0]
+        #sampleset.append(temp)
         #print('beta: ' + str(beta))
-        print('convolution ' + str(temp))
+        #print('convolution ' + str(temp))
         if (alpha == 0.0): 
             spreadb.append(beta)
         beta += math.pi / bstep
