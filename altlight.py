@@ -38,10 +38,17 @@ print("Defining Functions")
 
 #math.cos(w) = sin(theta) * sin(alpha) * cos(phi) * cos(beta) + sin(theta) * sin(phi) * sin(alpha) * sin(beta) + cos(theta) * cos(alpha)
 #function of equation inside double integral
+
+#need to clamp to?
+#max(func, 0)?
 def func (phi, theta, alpha, beta):   
-    return (math.sin(theta) * math.sin(alpha) * math.cos(phi) * math.cos(beta) 
+    cosgam = (math.sin(theta) * math.sin(alpha) * math.cos(phi) * math.cos(beta) 
     + math.sin(theta) * math.sin(phi) * math.sin(alpha) * math.sin(beta) 
     + math.cos(theta) * math.cos(alpha)) * Rect(theta/w) * math.sin(theta)
+
+    if(cosgam < 0):
+        print("NEGATIVE VALUE: " + cosgam)
+    return max(cosgam, 0)
 
 #multiplying by scopetheta here will not be effective.
 #function to calculate convolution
@@ -98,7 +105,7 @@ while alpha <= math.pi / 2.0:
         temp = usef(a, b, gfun, hfun, alpha, beta)[0] * 1/Area
         sampleset.append(temp)
         #print('beta: ' + str(beta))
-        print('convolution ' + str(temp))
+        #print('convolution ' + str(temp))
         if (alpha == 0.0): 
             spreadb.append(beta)
         beta += math.pi / bstep

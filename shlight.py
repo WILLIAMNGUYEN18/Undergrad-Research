@@ -13,6 +13,25 @@ import numpy as np
 import matplotlib.mlab
 import pyshtools
 
+#associated legendre function?
+#transform?
+#cos(theta)
+# Alm = Clm double integral f(theta) Plm(cos(theta))e^(im(phi)) sin(theta)d(theta)d(phi) 
+#== Clm integral(0-->2pi) e^(im(phi)) integral f(theta) Plm(cos(theta)) sin(theta)d(theta)
+# @ m = 0, e^(im(phi)) = 1 from 0 --> 2pi = 2pi
+# @ non-zero cancels itself out and becomes 0
+#Light coefficient  Llm= 2piC Cl0 integral (0 --> omega) Pl0(cos(theta))sin(theta)d(theta), @ m = 0
+#0 @ m =/= 0
+#Shading COefficient Slm = 2pi Cl0 integral(0 --> pi/2)cos(theta) Pl0(cos(theta))sin(theta)d(theta) @ m = 0
+#0 @ m =/= 0
+
+#truncate to l (order) --> 3 rather than infinity
+
+#can use sph_harm to skip steps plugging in specific n, m, phi, and theta
+#utilize 2pi and potentially sin(theta)
+#sum of l = 0 --> 3 (or infinity) 
+
+#alternatively, try to work with legendre functions and a constant()
 
 print("Defining Functions")
 
