@@ -81,10 +81,15 @@ phi = np.linspace(0, 2 * np.pi, 48)
 theta, phi = np.meshgrid(theta, phi)
 
 #3rd order --> m = 3; l <= m
-m = 3
-l = 3
+m = 0
+l = 0
+w = np.pi / 24.0
 
-w = np.pi / 24
+
+for m in range(4):
+    for l in range(4):
+        2 * np.pi * scipy.special.sph_harm(l,m,)
+
 
 #sph_harm(m,l, phi, theta).real
 
