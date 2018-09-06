@@ -1,6 +1,8 @@
 # importing the required module
 from scipy import integrate
 from scipy import special
+from scipy.special import sph_harm
+
 #from scipy.special import sph_harm
 from scipy.integrate import quad, dblquad
 import math
@@ -38,6 +40,8 @@ print("Defining Functions")
 #https://scipython.com/book/chapter-8-scipy/examples/visualizing-the-spherical-harmonics/
 #https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.sph_harm.html
 #http://docs.enthought.com/mayavi/mayavi/auto/example_spherical_harmonics.html
+#https://www.youtube.com/watch?v=wuCArO5Iy1A
+
 
 # scipy.special.sph_harm(m, n, theta, phi) = <ufunc 'sph_harm'>¶
 # m = order of harmonic (3?); m <= n
@@ -78,17 +82,23 @@ print("Defining Functions")
 theta = np.linspace(0, np.pi / 2, 48)
 #phi may be fine as it becomes a non-factor?
 phi = np.linspace(0, 2 * np.pi, 48)
-theta, phi = np.meshgrid(theta, phi)
+theta1, phi1 = np.meshgrid(theta, phi)
 
 #3rd order --> m = 3; l <= m
 m = 0
 l = 0
 w = np.pi / 24.0
+values = []
 
 
-for m in range(4):
-    for l in range(4):
-        2 * np.pi * scipy.special.sph_harm(l,m,)
+#for m in range(4):
+for l in range(4):
+    temp = 2 * np.pi * sph_harm(m, l, phi, theta).real
+    print(str(temp))
+    values.append(temp)
+
+#        values.append(2 * np.pi * sp.sph_harm(l,m,theta, phi).real)
+#        2 * np.pi * scipy.special.sph_harm(l,m,theta, phi).real
 
 
 #sph_harm(m,l, phi, theta).real
@@ -148,14 +158,35 @@ while alpha <= math.pi / 2.0:
         #print('beta: ' + str(beta))
         #print('convolution ' + str(temp))
         if (alpha == 0.0): 
+            for l in range(4):
+                store = 2 * np.pi * sph_harm(m, l, beta, alpha).real
+                print(str(store))
+                sampleset.append(store)
             spreadb.append(beta)
         beta += math.pi / bstep
     alpha += math.pi / astep
 print('Plotting Graph')
-
+X,Y = np.meshgrid(spreada, spreadb)
+Z = np.reshape(np.array(sampleset), (len(spreada), len(spreadb)))
 
 #ax.set_xlabel('Alpha Axis')
 #ax.set_ylabel('Beta Axis')
 #ax.set_zlabel('Convolution Axis')
 #ax.plot_surface(X,Y,Z)
 plt.show()
+
+#spherical harmonics for rect and cos functions
+#evaluating for
+#following thesis chapter
+#Don't care about m (whatever controls phi), it's always zero
+#Summing for different Ls and
+#coefficients for ach of rect and cos
+#constant correction based on L
+#pairwise multiply
+#reconvert back into final answer
+#function of theta at that poitn
+#sample for different thetas
+
+#write out steps mathematically and get it reviewed.
+#remember the 2pi
+#make sure to apply constants
