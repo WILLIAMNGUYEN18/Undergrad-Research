@@ -180,11 +180,11 @@ plt.show()
 #following thesis chapter
 #Don't care about m (whatever controls phi), it's always zero
 #Summing for different Ls and
-#coefficients for ach of rect and cos
+#coefficients for each of rect and cos
 #constant correction based on L
-#pairwise multiply
-#reconvert back into final answer
-#function of theta at that poitn
+#pairwise multiplication of rect and cos coefficients
+#reconvert back into final answer (time rather than frequency again)
+#function of theta at that point
 #sample for different thetas
 
 #write out steps mathematically and get it reviewed.
