@@ -2,6 +2,7 @@
 from scipy import integrate
 from scipy import special
 from scipy.special import sph_harm
+from scipy.special import lpmv
 from scipy.integrate import quad, dblquad
 import math
 import matplotlib.pyplot as plt
@@ -49,13 +50,32 @@ def Rect(n):
     else:
         return 0.0
 
+#2pi * normal (constant?) * e^im(phi) * Plm(legendre function)
 def overall(l,m,w, theta, phi,):
-    cosstore = 2 * math.pi *  normalization(l) * eulers(m, phi)
+    cosstore = 2 * math.pi *  normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(theta))
     #may not need to multiply by math.pi again
-    rectstore = 2 * math.pi * normalization(l) * eulers(m, phi)
+    rectstore = 2 * math.pi * normalization(l) * eulers(m, phi) * lpmv(m,l, Rect(theta))
+    return cosstore * rectstore
 
 
 
+#theta is an array (linspace) atm. Need random theta values
+#lpmv produces a single value. This can hopefully be used as a float    
+
+while l < 3:
+    angphi = 0
+    angtheta = 0
+    while angtheta <= math.pi / 2:
+        print("l = : " + str(l))
+        print("phi = : " + str(angphi))
+        print("theta = : " + str(angtheta))
+        store1 = lpmv(m, l, math.cos(angtheta))
+        store2 = lpmv(m, l, Rect(angtheta))
+        print("Cosine Legendre function = : " + str(store1.tolist()))
+        print("Rect Legendre function = : " + str(store2.tolist()))
+        angtheta += w
+        angphi += w
+    l += 1
 #scipy.special.lpmv(m, v, x)
 #m : array_like
 #    Order (int or float). If passed a float not equal to an integer the function returns NaN.
