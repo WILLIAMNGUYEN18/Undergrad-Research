@@ -15,8 +15,8 @@ import matplotlib.mlab
 import pyshtools
 
 
-theta = np.linspace(0, np.pi / 2, 48)
-phi = np.linspace(0, 2 * np.pi, 48)
+theta = np.linspace(0, np.pi / 2, 24)
+phi = np.linspace(0, 2 * np.pi, 24)
 
 #theta1, phi1 = np.meshgrid(theta, phi)
 m = 0
@@ -32,8 +32,8 @@ spreadb = []
 def normalization(l):
     #2 possibilities here based on readings
     #return
-    #norm = math.sqrt((2 * l + 1) / (4 * math.pi))
-    norm = math.sqrt((4 * math.pi) / (2 * l + 1))
+    norm = math.sqrt((2 * l + 1) / (4 * math.pi))
+    #norm = math.sqrt((4 * math.pi) / (2 * l + 1))
 
     return norm
 
@@ -51,7 +51,7 @@ def Rect(n):
         return 0.0
 
 #2pi * normal (constant?) * e^im(phi) * Plm(legendre function)
-def overall(l,m,w, theta, phi,):
+def overall(l,m,w, theta, phi):
     cosstore = 2 * math.pi *  normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(theta))
     #may not need to multiply by math.pi again
     rectstore = 2 * math.pi * normalization(l) * eulers(m, phi) * lpmv(m,l, Rect(theta))
@@ -61,8 +61,11 @@ def overall(l,m,w, theta, phi,):
 
 #theta is an array (linspace) atm. Need random theta values
 #lpmv produces a single value. This can hopefully be used as a float    
+sphcoscalc = []
+
 
 while l < 3:
+    overtheta = []
     angphi = 0
     angtheta = 0
     while angtheta <= math.pi / 2:
@@ -73,9 +76,28 @@ while l < 3:
         store2 = lpmv(m, l, Rect(angtheta))
         print("Cosine Legendre function = : " + str(store1.tolist()))
         print("Rect Legendre function = : " + str(store2.tolist()))
+        over1 = overall(l,m,w,angtheta, angphi)
+        print("Cosine and Rectangle Spherical Harmonic Result: " + str(over1))
+        sphcoscalc.append( normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(angtheta)) )
+        
+        #list index out of range
+        #overtheta[l] += over1
+
+
+
         angtheta += w
         angphi += w
+    #comparing spherical harmonic values to my result
+    sphcosharm = sph_harm(m, l,  phi, theta)
+    print("Our calculated spherical harmonic of cos(theta) is: " + str(sphcoscalc))
+    print("The pre-computed spherical harmonic of cos(theta) is:" + str(sphcosharm))
+    if sphcoscalc == sphcosharm:
+        print("Our calculation matches the precomputed spherical harmonic")
+
     l += 1
+
+
+
 #scipy.special.lpmv(m, v, x)
 #m : array_like
 #    Order (int or float). If passed a float not equal to an integer the function returns NaN.
