@@ -65,7 +65,7 @@ sphcoscalc = []
 
 
 while l < 3:
-    overtheta = []
+    overtheta = [0,0,0]
     angphi = 0
     angtheta = 0
     while angtheta <= math.pi / 2:
@@ -81,7 +81,7 @@ while l < 3:
         sphcoscalc.append( normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(angtheta)) )
         
         #list index out of range
-        #overtheta[l] += over1
+        overtheta[l] += over1
 
 
 
