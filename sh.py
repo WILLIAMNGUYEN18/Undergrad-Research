@@ -21,7 +21,7 @@ phi = np.linspace(0, 2 * np.pi, 12)
 #theta1, phi1 = np.meshgrid(theta, phi)
 m = 0
 l = 0
-w = np.pi / 22.0
+w = np.pi / 24.0
 
 sampleset = []
 
@@ -51,6 +51,7 @@ def Rect(n):
         return 0.0
 
 #2pi * normal (constant?) * e^im(phi) * Plm(legendre function)
+#potentially forgetting the weight (sqrt(4pi / 2l + 1))
 def overall(l,m,w, theta, phi):
     cosstore = 2 * math.pi *  normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(theta))
     #may not need to multiply by math.pi again
@@ -62,7 +63,8 @@ def overall(l,m,w, theta, phi):
 #theta is an array (linspace) atm. Need random theta values
 #lpmv produces a single value. This can hopefully be used as a float    
 sphcoscalc = []
-
+overl = []
+step = np.pi / 22
 
 while l < 3:
     overtheta = [0,0,0]
@@ -70,25 +72,35 @@ while l < 3:
     angtheta = 0
     sphcoscalc = []
     while angtheta <= math.pi / 2:
-        print("l = : " + str(l))
-        print("phi = : " + str(angphi))
-        print("theta = : " + str(angtheta))
+#        print("l = : " + str(l))
+#        print("phi = : " + str(angphi))
+#        print("theta = : " + str(angtheta))
         store1 = lpmv(m, l, math.cos(angtheta))
         store2 = lpmv(m, l, Rect(angtheta))
-        print("Cosine Legendre function = : " + str(store1.tolist()))
-        print("Rect Legendre function = : " + str(store2.tolist()))
-        over1 = overall(l,m,w,angtheta, angphi)
-        print("Cosine and Rectangle Spherical Harmonic Result: " + str(over1))
+#        print("Cosine Legendre function = : " + str(store1.tolist()))
+#        print("Rect Legendre function = : " + str(store2.tolist()))
+
         sphcoscalc.append( normalization(l) * eulers(m, angphi) * lpmv(m,l, math.cos(angtheta)) )            
         #list index out of range
-        overtheta[l] += over1
-        angphi += w
-        angtheta += w
+        over1 = overall(l,m,w,angtheta, angphi)
+        print("Cosine and Rectangle Spherical Harmonic Result: " + str(over1))
+        overtheta.append(over1)
+        #CHANGE STEP TO SEPARATE VARIABLE THAN W
+        angphi += step
+        angtheta += step
+    print("")
+    for a in overtheta:
+        print(a)
 
+    print("")
+    overl.append(overtheta)
+
+    for b in overl:
+        print(b) 
     #comparing spherical harmonic values to my result
     sphcosharm = sph_harm(m, l,  phi, theta).real
-    print("Our calculated spherical harmonic of cos(theta) is: " + str(sphcoscalc))
-    print("The pre-computed spherical harmonic of cos(theta) is:" + str(sphcosharm))
+#    print("Our calculated spherical harmonic of cos(theta) is: " + str(sphcoscalc))
+#    print("The pre-computed spherical harmonic of cos(theta) is:" + str(sphcosharm))
 
     #QUASHED
     #Only getting 12 calculated values for the 24 precomputed. 
@@ -104,11 +116,19 @@ while l < 3:
             print("MATCHING CALCULATED & PRECOMPUTED AT: " + str(i))
         else:
             print("NOT MATCHING CALCULATING & PRECOMPUTED: " + str(i))
-    for x in np.nditer(theta):
-        print(x)
-    
-    for y in np.nditer(phi):
-        print (y)
+#checking steps of sph_harm
+#    for x in np.nditer(theta):
+#        print(x)
+#    for y in np.nditer(phi):
+#        print (y)
+    print("At L = " + str(l) + " The product of Rect and Cos Coefficients are: ")
+    for a in overtheta:
+        print(a)
+
+    overl.append(overtheta)
+    print("Across All L, All Coefficients: ")
+    for b in overl:
+        print(b) 
     l += 1
 
 
