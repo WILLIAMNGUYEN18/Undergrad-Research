@@ -23,12 +23,6 @@ m = 0
 l = 0
 w = np.pi / 24.0
 
-sampleset = []
-
-#unsure if I need these
-spreada = []
-spreadb = []
-
 def normalization(l):
     #2 possibilities here based on readings
     #return
@@ -53,10 +47,10 @@ def Rect(n):
 #2pi * normal (constant?) * e^im(phi) * Plm(legendre function)
 #potentially forgetting the weight (sqrt(4pi / 2l + 1))
 def overall(l,m,w, theta, phi):
-    cosstore = 2 * math.pi *  normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(theta))
+    cosstore = normalization(l) * eulers(m, phi) * lpmv(m,l, math.cos(theta))
     #may not need to multiply by math.pi again
-    rectstore = 2 * math.pi * normalization(l) * eulers(m, phi) * lpmv(m,l, Rect(theta))
-    return cosstore * rectstore
+    rectstore = normalization(l) * eulers(m, phi) * lpmv(m,l, Rect(theta))
+    return 2 * math.pi * math.sqrt((4 * np.pi) / (2 * l + 1)) * cosstore * rectstore
 
 
 
@@ -64,10 +58,13 @@ def overall(l,m,w, theta, phi):
 #lpmv produces a single value. This can hopefully be used as a float    
 sphcoscalc = []
 overl = []
+newl = []
 step = np.pi / 22
 
 while l < 3:
     overtheta = [0,0,0]
+    newset = []
+
     angphi = 0
     angtheta = 0
     sphcoscalc = []
@@ -83,9 +80,12 @@ while l < 3:
         sphcoscalc.append( normalization(l) * eulers(m, angphi) * lpmv(m,l, math.cos(angtheta)) )            
         #list index out of range
         over1 = overall(l,m,w,angtheta, angphi)
-        print("Cosine and Rectangle Spherical Harmonic Result: " + str(over1))
+        #print("Cosine and Rectangle Spherical Harmonic Result: " + str(over1))
         overtheta.append(over1)
-        #CHANGE STEP TO SEPARATE VARIABLE THAN W
+        #B9 --> coeffcients (flm * kl0 *pl0(cos(theta)))
+        presum = over1 * (normalization(l) * lpmv(m,l, math.cos(angtheta)))
+        print("New presummed value inserted into set at l:" + str(l) + " and theta: " + str(angtheta) + str(presum))
+        newset.append(presum)
         angphi += step
         angtheta += step
     print("")
@@ -94,13 +94,63 @@ while l < 3:
 
     print("")
     overl.append(overtheta)
+    newl.append(newset)
+    l += 1
 
-    for b in overl:
-        print(b) 
+
+print("")
+print("")
+print("")
+print("checking newl values")
+for n in newl:
+    print( "list at different l: " + str(n))
+    for m in n:
+        print(m)
+
+fphitheta = []
+for counter1, counter2, counter3 in zip(newl[0],newl[1], newl[2]):
+    print("value of at l = 0: " + str(counter1))
+    print("value of at l = 1: " + str(counter2))
+    print("value of at l = 2: " + str(counter3))
+    print("value summed across l: " + str(counter1 + counter2 + counter3))
+    fphitheta.append((counter1 + counter2 + counter3))
+
+
+#graph could be 2d, only increasing for theta. No need for 3D
+
+
+
+    #for newset B9 calculations
+    #potentially ignoring sum m = -l --> l
+    #sum of l= 0 --> infinity might go to the chosen band (3?)
+    #can just use sum() function along with iterable (list in this case)
+    #already separated into lists for each l. able to calculate for entire theta (phi doesn't matter)
+
+        
+    #CHANGE STEP TO SEPARATE VARIABLE THAN W
+    #add three newl list values
+
+    #print ("length of coefficients is: " + str(len(newl[1])))
+    #count = 0
+    #while count < len(newl[1]):
+    #    newl[1]
+    #    count += 1
+
+
+    #wrong
+
+
+    #for b in overl:
+    #    print("sph coeffcients are: " + str(b)) 
     #comparing spherical harmonic values to my result
-    sphcosharm = sph_harm(m, l,  phi, theta).real
+    #sphcosharm = sph_harm(m, l,  phi, theta).real
 #    print("Our calculated spherical harmonic of cos(theta) is: " + str(sphcoscalc))
 #    print("The pre-computed spherical harmonic of cos(theta) is:" + str(sphcosharm))
+
+#need to reverse the loop to separate out the theta values, while grouping the l values
+#alternatively, find a way to parse/organize values
+
+
 
     #QUASHED
     #Only getting 12 calculated values for the 24 precomputed. 
@@ -109,29 +159,34 @@ while l < 3:
 
     #
 
-    print ("length of calculated: " + str(len(sphcoscalc)))
-    print ("length of precomputed: " + str(len(sphcosharm)))
-    for i in range(len(sphcoscalc)):
-        if sphcoscalc[i] == sphcosharm[i]:
-            print("MATCHING CALCULATED & PRECOMPUTED AT: " + str(i))
-        else:
-            print("NOT MATCHING CALCULATING & PRECOMPUTED: " + str(i))
+    #print ("length of calculated: " + str(len(sphcoscalc)))
+    #print ("length of precomputed: " + str(len(sphcosharm)))
+    #for i in range(len(sphcoscalc)):
+    #    if sphcoscalc[i] == sphcosharm[i]:
+    #        print("MATCHING CALCULATED & PRECOMPUTED AT: " + str(i))
+    #    else:
+    #        print("NOT MATCHING CALCULATING & PRECOMPUTED: " + str(i))
 #checking steps of sph_harm
 #    for x in np.nditer(theta):
 #        print(x)
 #    for y in np.nditer(phi):
 #        print (y)
-    print("At L = " + str(l) + " The product of Rect and Cos Coefficients are: ")
-    for a in overtheta:
-        print(a)
+    #print("At L = " + str(l) + " The product of Rect and Cos Coefficients are: ")
+    #for a in overtheta:
+    #    print(a)
 
-    overl.append(overtheta)
-    print("Across All L, All Coefficients: ")
-    for b in overl:
-        print(b) 
-    l += 1
+    #overl.append(overtheta)
+    #print("Across All L, All Coefficients: ")
+    #for b in overl:
+    #    print(b)
+    
 
+#for all coefficients, multiply by Kl0Plm(cosϴ)
+#for a in overl:
+##    for b in a:
+#        newset.append[b * normalization(l)]
 
+#will need to think on how to retain connection with phi and theta for graphing purposes
 
 #scipy.special.lpmv(m, v, x)
 #m : array_like
