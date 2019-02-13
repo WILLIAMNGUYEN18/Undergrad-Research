@@ -34,7 +34,7 @@ drive.mount('/fdrive')
 # Create a directory and mount Google Drive using that directory.
 
 #setting up path
-gender = "female"
+gender = "male"
 #gender = "female"
 BASE_PATH = '/fdrive/My Drive/Research/bodystats/'
 if not os.path.exists(BASE_PATH):
@@ -101,7 +101,9 @@ class BodyStatsNet(nn.Module):
         #128 node 2nd layer to 200 node output, used for classification in this case
         
         #potentially reduce middle layers due to overfitting
-        self.fc2 = nn.Linear(80, meep)
+        #https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+        self.fc2 = nn.Linear(80, 64)
+        self.fc3 = nn.Linear(64, meep)
 
         
     def forward(self, x):
@@ -118,7 +120,7 @@ class BodyStatsNet(nn.Module):
         #x = F.relu(self.fc1(x))
         #x = self.drop(x)
         x = self.fc2(x)
-        
+        x = F.relu(self.fc3(x))
         #Hidden layers have too many features that effectively memorize the training set
         #Overfitting
         #need to add dropout layers that effectively remove weights, removing features to reduce overfitting
@@ -489,10 +491,10 @@ def test(model, device, test_loader, log_interval=None):
         
         #print out predicted vs actual %fat
         for i in range(0, len(regr_results)):
-          print("fuck")
+          #print("fuck")
           #issue on this line. Printing NaN or INF
-          #print('Test {}: Predicted: {:.4f}, Actual: {:.4f}\n'.format(
-          #  i, regr_results[i][0], regr_results[i][1]))
+          print('Test {}: Predicted: {:.4f}, Actual: {:.4f}\n'.format(
+            i, regr_results[i][0], regr_results[i][1]))
         print("Printing GT and Pred for TEST")
         print(gt)
         print(prediction)
@@ -508,17 +510,18 @@ REALT_BATCH_SIZE = 147 #17 #36 #255
 SYNTHT_BATCH_SIZE = 102
 TEST_BATCH_SIZE = 38 #31 for male 39 for female
 EPOCHS = 100 #50
+LEARNING_RATE = 5e-7
+MOMENTUM = 0.9
+USE_CUDA = True
+PRINT_INTERVAL = 5
+WEIGHT_DECAY = 5e-7
+LOG_PATH = DATA_PATH + '_log.pkl'
+CHECKPOINT_PATH = DATA_PATH + '/checkpoints'
+
 
 #https://stackoverflow.com/questions/45869131/all-tensorflow-outputs-are-nan
 #lower learning rate to deal with alternating negatives that lead to NaN
 
-LEARNING_RATE = 5e-4
-MOMENTUM = 0.9
-USE_CUDA = True
-PRINT_INTERVAL = 5
-WEIGHT_DECAY = 1e-3
-LOG_PATH = DATA_PATH + '_log.pkl'
-CHECKPOINT_PATH = DATA_PATH + '/checkpoints'
 
 # Now the actual training code
 use_cuda = USE_CUDA and torch.cuda.is_available()
