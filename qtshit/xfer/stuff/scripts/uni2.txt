@@ -1,0 +1,31 @@
+//set RES mkr
+set RES 4k
+//set RES 8k
+//set RES mocap
+//set VER -m2
+//set VER -m0
+//set VER -f
+set VER -m
+uLoadExampleSet data/ex-{RES}{VER}.txt
+
+// init
+uLoadMu data/mu-pca{VER}.txt
+uLoadPoses data/poses-4k{VER}.dat
+uLoadWeights data/weights-4k{VER}.dat
+uLoadSolve data/solve-4k-m.dat
+//!pdds
+//!pdds
+
+// mocap
+//uLoadMu data/zero.txt
+//uLoadPoses data/poses-4k-mp.dat
+//uLoadWeights data/weights-4k-mp.dat
+//uLoadDress data/dress-4k-mp.dat
+//uLoadPdds data/pdds-4k-mp.dat
+//uZeroPoses
+
+uShow 0
+
+//uEdgeMatchInit 2 data/csr/csr9002c.ply data/csr/csr9002c.mkr data/j{RES}.mkr
+//uEdgeMatchLoadNW data/bend-{RES}.tex
+//uEdgeMatchLoadSW data/lock-{RES}.dat

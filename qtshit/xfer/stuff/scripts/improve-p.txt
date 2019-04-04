@@ -1,0 +1,85 @@
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+uStartSolver 31 500
+uAutoWeight
+uStartSolver 32 100
+uStartSolver 768 100
+uAutoWeight
+uSaveSolve data/solve-m3p.dat
+
+!improve-p

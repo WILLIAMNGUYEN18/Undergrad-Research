@@ -1,0 +1,53 @@
+uSetSingleComponent 2
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 3
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 4
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 5
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 6
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 7
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 8
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 9
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 10
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 11
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 12
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 13
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 14
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 15
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 16
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 17
+!alteropt
+uSaveSolve data/solve4.dat
+uSetSingleComponent 18
+!alteropt
+uSetSingleComponent 19
+!alteropt
+uSaveSolve data/solve4.dat

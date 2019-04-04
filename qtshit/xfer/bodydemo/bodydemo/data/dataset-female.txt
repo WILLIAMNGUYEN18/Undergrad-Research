@@ -1,0 +1,35 @@
+data/3-4view.ca.txt
+data/template.ply
+data/average-f-pt.disp
+40
+data/u-jf.ma
+data/s-jf.txt
+4
+Height/Weight
+data/feature-hw-f.txt
+data/finv-hw-f.txt
+Height (cm) Height (") 0.1 0.03937 1 146 185
+Weight (kg) Weight (lbs) 1 2.2 3 47 156
+Circumferences
+data/feature-circ-f.txt
+data/finv-circ-f.txt
+Height (cm) Height (") 0.1 0.03937 1 146 185
+Chest (cm) Chest (") 0.1 0.03937 1 78 123
+Waist (cm) Waist (") 0.1 0.03937 1 58 106
+Hips (cm) Hips (") 0.1 0.03937 1 89 148
+Lengths
+data/feature-len-f.txt
+data/finv-len-f.txt
+Height (cm) Height (") 100 39.37 1 146 185
+Head width (cm) Head width (") 100 39.37 1 12.7 15.6
+Shoulder width (cm) Shoulder width (") 100 39.37 1 33.7 45.8
+Arm length (cm) Arm length (") 100 39.37 1 39 53
+Hip width (cm) Hip width (") 100 39.37 1 25.1 42.7
+Leg length (cm) Leg length (") 100 39.37 1 72.5 99
+Weight/Measurements
+data/feature-wssa-f.txt
+data/finv-wssa-f.txt
+Weight (kg) Weight (lbs) 1 2.2 3 47 156
+Height (cm) Height (") 100 39.37 1 146 185
+Shoulder width (cm) Shoulder width (") 100 39.37 1 33.7 45.8
+Arm length (cm) Arm length (") 100 39.37 1 39 53

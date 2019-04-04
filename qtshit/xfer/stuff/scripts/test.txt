@@ -1,0 +1,10 @@
+uDressFromEx
+set ITER 20
+uEdgeMatchInit 2 data/csr/csr9002c.ply data/csr/csr9002c.mkr data/j{RES}.mkr
+
+uEdgeMatchLoadNW data/bend-{RES}.tex
+//uEdgeMatchLoadSW data/lock-{RES}.dat
+//uEdgeMatchLoadRestrict data/arm.tex
+//uEdgeMatchSolve 1000 10 0.01 100000 {ITER}
+//uEdgeMatchSolve 100 100 0.01 10000 {ITER}
+//uEdgeMatchSolve 1000 0.1 10 100 {ITER}

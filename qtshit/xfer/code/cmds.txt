@@ -1,0 +1,9 @@
+!load
+uLoadSliders data/features/hw.txt
+uSetSliderBase 70 180
+uLoadMocap data/mocap/sy/test.dof
+uLoadSolve data/solve-dp.dat
+uLoadWeights data/weights-dp.dat
+uStartSolver m 100
+!genNormalMaps
+uSaveSkinPts {CHAR_ID} ../ganger/tia/disp/%s%c.disp

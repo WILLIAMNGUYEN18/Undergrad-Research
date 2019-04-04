@@ -1,0 +1,79 @@
+set CSR 0001
+set POSEID 0
+x {CMD}
+
+set CSR 0002
+set POSEID 1
+x {CMD}
+
+set CSR 0007
+set POSEID 2
+x {CMD}
+
+set CSR 0008
+set POSEID 3
+x {CMD}
+
+set CSR 0009
+set POSEID 4
+x {CMD}
+
+set CSR 0010
+set POSEID 5
+x {CMD}
+
+set CSR 0012
+set POSEID 6
+x {CMD}
+
+set CSR 0013
+set POSEID 7
+x {CMD}
+
+set CSR 0016
+set POSEID 8
+x {CMD}
+
+set CSR 0024
+set POSEID 9
+x {CMD}
+
+set CSR 0025
+set POSEID 10
+x {CMD}
+
+set CSR 0026
+set POSEID 11
+x {CMD}
+
+set CSR 0027
+set POSEID 12
+x {CMD}
+
+set CSR 0028
+set POSEID 13
+x {CMD}
+
+set CSR 0029
+set POSEID 14
+x {CMD}
+
+set CSR 0030
+set POSEID 15
+x {CMD}
+
+set CSR 0047
+set POSEID 16
+x {CMD}
+
+set CSR 0048
+set POSEID 17
+x {CMD}
+
+set CSR 0049
+set POSEID 18
+x {CMD}
+
+set CSR 0050
+set POSEID 19
+x {CMD}

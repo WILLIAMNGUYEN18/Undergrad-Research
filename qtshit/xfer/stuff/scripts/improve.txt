@@ -1,0 +1,71 @@
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+uStartSolver 15 50
+uStartSolver 32 10
+uStartSolver 256 10
+uSaveSolve data/solve-m3.dat
+
+// done!

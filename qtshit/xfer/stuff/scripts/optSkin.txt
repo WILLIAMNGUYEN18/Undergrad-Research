@@ -1,0 +1,4 @@
+scLoadSkin auto.skin
+cvAutoskinInit
+cvAutoskinSolve
+scSaveSkin opt.skin

@@ -1,0 +1,9 @@
+uSavePoses data/bones-f.dat 1
+uSaveWeights data/weights-f.dat
+uSavePdds data/pdds-f.dat
+uSaveDress data/dress-f.dat
+
+uLoadPoses data/bones-f.dat 1
+uLoadWeights data/weights-f.dat
+uLoadPdds data/pdds-f.dat
+uLoadDress data/dress-f.dat

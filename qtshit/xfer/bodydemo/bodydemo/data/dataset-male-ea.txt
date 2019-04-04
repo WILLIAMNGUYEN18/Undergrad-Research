@@ -1,0 +1,28 @@
+data/3-4view.ca.txt
+data/boxer-trans2.ply
+-
+40
+data/ea-m.ma
+data/s-jm.txt
+3
+Height/Weight
+data/feature-hw-m.txt
+data/finv-hw-m.txt
+Height (cm) Height (") 0.1 0.03937 1 159 206
+Weight (kg) Weight (lbs) 1 2.2 3 46 136
+Circumferences
+data/feature-circ-m.txt
+data/finv-circ-m.txt
+Height (cm) Height (") 0.1 0.03937 1 159 206
+Chest (cm) Chest (") 0.1 0.03937 1 82 139
+Waist (cm) Waist (") 0.1 0.03937 1 72 139
+Hips (cm) Hips (") 0.1 0.03937 1 91 142
+Lengths
+data/feature-len-m.txt
+data/finv-len-m.txt
+Height (cm) Height (") 100 39.37 1 159 206
+Head width (cm) Head width (") 100 39.37 1 12 19
+Shoulder width (cm) Shoulder width (") 100 39.37 1 37.6 50.9
+Arm length (cm) Arm length (") 100 39.37 1 41.1 54.9
+Hip width (cm) Hip width (") 100 39.37 1 25 49.6
+Leg length (cm) Leg length (") 100 39.37 1 76.8 105.2

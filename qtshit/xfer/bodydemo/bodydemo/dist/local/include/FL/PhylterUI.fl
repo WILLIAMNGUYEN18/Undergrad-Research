@@ -1,0 +1,201 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.00 
+header_name {.h} 
+code_name {.cpp} 
+gridx 5 
+gridy 5 
+snap 3
+class PhylterUI {open
+} {
+  Function {PhylterUI(PhylterData *my_PhylterData)} {open
+  } {
+    Fl_Window mainWindow {
+      label {The Great Dynamic Motion Machine} open
+      xywh {43 0 977 753} labelfont 9 align 4 visible
+    } {
+      Fl_Box glWindow {
+        xywh {0 25 705 630} box DOWN_FRAME
+        code0 {\#include "PhylterGLWindow.h"}
+        class Phylter_FL_GL_Window
+      }
+      Fl_Menu_Bar menubar {open
+        xywh {0 0 705 25}
+      } {
+        submenu file {
+          label File open
+          xywh {0 0 100 20} labelcolor 178
+        } {
+          menuitem loadModel {
+            label {Load Model}
+            callback {void PhylterUI::cb_loadModel(Fl_Menu_* o, void* v)}
+            xywh {0 0 100 20} shortcut 0x8006c labelcolor 218
+          }
+          menuitem humanModel {
+            label {Human Model}
+            callback {void PhylterUI::cb_useHumanModel(Fl_Menu_* o, void* v)}
+            xywh {0 0 100 20} shortcut 0x80068 labelcolor 218
+          }
+          menuitem loadFrame {
+            label {Load Frames}
+            callback {void cb_loadMotionData(fl_Menu_* o, void* v)}
+            xywh {5 5 100 20} shortcut 0x80066 labelcolor 218
+          }
+          menuitem saveFrame {
+            label {Save Frames}
+            callback {void PhylterUI::cb_saveMotionData(Fl_Menu_ * o, void* v)}
+            xywh {0 0 100 20} shortcut 0x80073 labelcolor 218
+          }
+          menuitem exit {
+            label Exit
+            callback {void PhylterUI::cb_exit(Fl_Widget* o, void* v)}
+            xywh {0 0 100 20} shortcut 0x80065 labelcolor 218
+          }
+        }
+        submenu phylters {
+          label Phylters open
+          xywh {0 0 100 20} labelcolor 178
+        } {
+          menuitem all {
+            label All
+            user_data 0
+            callback {void PhylterUI::cb_callPhylter(Fl_Menu_ * o, void* v)}
+            xywh {0 0 100 20} shortcut 0x80061 labelcolor 218
+          }
+          menuitem lockLeg {
+            label {Lock Leg}
+            user_data 1
+            callback {void PhylterUI::cb_callPhylter(Fl_Menu_ * o, void* v)}
+            xywh {5 5 100 20} shortcut 0x8006c labelcolor 218
+          }
+          menuitem trajectory {
+            label Trajectory
+            user_data 2
+            callback {void PhylterUI::cb_callPhylter(Fl_Menu_ * o, void* v)}
+            xywh {15 15 100 20} shortcut 0x80074 labelcolor 218
+          }
+          menuitem lockFoot {
+            label {Lock Foot}
+            user_data 3
+            callback {void PhylterUI::cb_callPhylter(Fl_Menu_ * o, void* v)}
+            xywh {25 25 100 20} shortcut 0x80066 labelcolor 218
+          }
+          menuitem autodetect {
+            label Autodetect
+            user_data 4
+            callback {void PhylterUI::cb_callPhylter(Fl_Menu_ * o, void* v)}
+            xywh {35 35 100 20} shortcut 0x80064 labelcolor 218
+          }
+          menuitem flying {
+            label Jumping
+            user_data 5
+            callback {void PhylterUI::cb_callPhylter(Fl_Menu_ * o, void* v)}
+            xywh {45 45 100 20} shortcut 0x8006a labelcolor 218
+          }
+        }
+        submenu help {
+          label Help open
+          xywh {0 0 100 20} labelcolor 178
+        } {
+          menuitem about {
+            label About
+            callback {void PhylterUI::cb_about(Fl_Menu_* o, void* v)}
+            xywh {0 0 100 20} shortcut 0x80061 labelcolor 218
+          }
+        }
+      }
+      Fl_Group keyframeControlsWindow {open
+        xywh {5 655 695 105}
+        code0 {\#include "KeyframeControlsWindow.h"}
+        class KeyframeControlsWindow
+      } {
+        Fl_Value_Slider mMotionFrameSlider {
+          label Frame
+          callback {void KeyframeControlsWindow::HandleEvent( Fl_Widget* w, void* data )}
+          xywh {5 670 510 20} type {Horz Knob} selection_color 178 labelsize 10 labelcolor 178 align 133 maximum 0 step 1
+        }
+        Fl_Value_Slider mBeginSlider {
+          label Begin
+          callback {void KeyframeControlsWindow::HandleEvent( Fl_Widget* w, void* data )}
+          xywh {5 705 510 20} type {Horz Knob} selection_color 170 labelsize 10 labelcolor 170 align 5 maximum 0 step 1
+        }
+        Fl_Value_Slider mEndSlider {
+          label End
+          callback {void KeyframeControlsWindow::HandleEvent( Fl_Widget* w, void* data )}
+          xywh {5 740 510 20} type {Horz Knob} selection_color 140 labelsize 10 labelcolor 140 align 5 maximum 0 step 1
+        }
+        Fl_Counter mCounter {
+          label {counter:}
+          callback {void KeyframeControlsWindow::HandleEvent( Fl_Widget* w, void* data )}
+          xywh {535 665 165 25} labeltype NO_LABEL labelcolor 218 minimum 0 maximum 0 step 1 textcolor 178
+        }
+        Fl_Button mPlayStopButton {
+          label {@>}
+          callback {void KeyframeControlsWindow::HandleEvent( Fl_Widget* w, void* data )}
+          xywh {630 700 70 55} labeltype SYMBOL_LABEL labelcolor 178
+        }
+        Fl_Light_Button mLoopButton {
+          label LOOP
+          callback {void KeyframeControlsWindow::HandleEvent( Fl_Widget* w, void* data )}
+          xywh {535 700 95 55} down_box ROUND_UP_BOX selection_color 178 labelfont 1 labelcolor 178 align 0
+        }
+      }
+      Fl_Group {} {open
+        xywh {715 15 250 55} box DOWN_FRAME
+      } {
+        Fl_Value_Input startInput {
+          label From
+          callback {void startInput(Fl_Widget* o, voidl *v)}
+          xywh {790 30 35 25} labelfont 1 labelcolor 178 maximum 0 step 1 textcolor 178
+        }
+        Fl_Value_Input endInput {
+          label To
+          callback {void endInput(Fl_Widget* o, void* v)}
+          xywh {865 30 35 25} labelfont 1 labelcolor 178 textcolor 178
+        }
+      }
+      Fl_Group {} {open
+        xywh {715 80 250 135} box DOWN_BOX
+      } {
+        Fl_Value_Slider unit_constraint {
+          label {Min Frames}
+          callback {void PhylterUI::unit_constraint(Fl_Widget* o, void* v)}
+          xywh {725 95 235 15} type {Horz Knob} selection_color 178 labelfont 1 labelsize 10 labelcolor 178 align 5 maximum 10 step 1 value 3 textcolor 178
+        }
+        Fl_Value_Slider dist_threshold {
+          label {Eigenvector Range}
+          callback {void PhylterUI::dist_threshold(Fl_Widget* o, void* v)}
+          xywh {725 125 235 15} type {Horz Knob} selection_color 100 labelfont 1 labelsize 10 labelcolor 100 align 5 maximum 0.01 step 0.0001 value 0.002 textcolor 100
+        }
+        Fl_Value_Slider primitive_bound {
+          label {Detection Range}
+          callback {void PhylterUI::primitive_bound(Fl_Widget* o, void* v)}
+          xywh {725 155 235 15} type {Horz Knob} selection_color 170 labelfont 1 labelsize 10 labelcolor 170 align 5 maximum 0.1 step 0.0001 value 0.05 textcolor 170
+        }
+        Fl_Value_Slider slope_bound {
+          label {Slope Range}
+          callback {void PhylterUI::slope_bound(Fl_Widget* o, void* v)}
+          xywh {725 185 235 15} type {Horz Knob} selection_color 194 labelfont 1 labelsize 10 labelcolor 194 align 5 maximum 0.01 step 0.0001 value 0.001 textcolor 194
+        }
+      }
+      Fl_Group {} {open
+        xywh {715 230 250 100} box DOWN_BOX
+      } {
+        Fl_Value_Slider floor_level {
+          label {Floor Level}
+          callback {void PhylterUI::floor_level(Fl_Widget* o, void* v)}
+          xywh {725 245 235 15} type Horizontal selection_color 178 labelfont 1 labelsize 10 labelcolor 178 align 5 minimum -0.5 maximum 0.5 step 0.001 value 0.001 textcolor 178
+        }
+        Fl_Value_Slider min_flying {
+          label {Min Flying}
+          callback {void PhylterUI::min_flying(Fl_Widget* o, void* v)}
+          xywh {725 275 235 15} type Horizontal selection_color 140 labelfont 1 labelsize 10 labelcolor 140 align 5 minimum 1 maximum 25 step 1 value 5 textcolor 140
+        }
+        Fl_Value_Slider floor_bound {
+          label {Floor Bound}
+          callback {void PhylterUI::floor_bound(Fl_Widget* o, void* v)} selected
+          xywh {725 305 235 15} type Horizontal selection_color 170 labelfont 1 labelsize 10 labelcolor 170 align 5 maximum 0.5 value 0.07 textcolor 170
+        }
+      }
+    }
+  }
+} 

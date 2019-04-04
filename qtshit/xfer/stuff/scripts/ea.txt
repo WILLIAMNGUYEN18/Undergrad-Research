@@ -1,0 +1,12 @@
+scInitSCMesh ../doppel/boxer-trans2.ply
+scCalcTransInfluences
+scUpdateLocal
+cvInitFromSkin 1
+cvAutoUpdate
+
+cvBuildExampleSet data/ea/ea-set.txt
+//cvEdgeMatchInit 0 data/ea/ea-james.mkr data/ea/ea-mrefs.txt
+cvInitSurfaceMatch 0 ../doppel/ea-james.mkr ../doppel/ea-mrefs.txt
+cvSetConfidence
+cvLoadSurfWeights data/ea/ea-lock.tex
+scColor

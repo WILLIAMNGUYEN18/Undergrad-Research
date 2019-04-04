@@ -1,0 +1,6 @@
+uEdgeMatchInit {POSE_ID} data/csr/csr9002{POSE}.ply data/csr/csr9002{POSE}.mkr data/mrefs-{RES}.txt
+uEdgeMatchLoadNW data/bend-{RES}.tex
+uEdgeMatchSolve 10000 10 0.01 100 {ITER}
+uEdgeMatchSolve 1000 100 0.01 10 {ITER}
+uEdgeMatchSolve 10000 0.1 10 1 {ITER}
+uEdgeMatchSaveEx data/csr-{RES}/csr9002{POSE}.ex

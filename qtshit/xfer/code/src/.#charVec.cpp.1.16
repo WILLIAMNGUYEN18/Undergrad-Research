@@ -1,0 +1,532 @@
+#include "charVec.h"
+#include "skeleton.h"
+#include "trimesh.h"
+#include "trimesh_render.h"
+#include "trimesh_util.h"
+#include "ba.h"
+#include "skinCalc.h"
+
+extern Skin scSkin;
+
+// CharVecPt ==============================================
+
+CharVecPt::CharVecPt() {
+	numInfluences = 0;
+	influences = NULL;
+	curComponents = NULL;
+	cv = NULL;
+}
+
+CharVecPt::~CharVecPt() {
+	if (influences)
+		delete []influences;
+	if (curComponents)
+		delete []curComponents;
+}
+
+void CharVecPt::init(CharVec *iCV, int nInf) {
+	cv = iCV;
+
+	numInfluences = nInf;
+	influences = new int[numInfluences];
+
+	curComponents = new Vec3d[cv->numComponents];
+	
+	data.resize(3 * cv->numComponents * numInfluences * CV_DEGREE);
+	backup.resize(3 * cv->numComponents * numInfluences * CV_DEGREE);
+}
+
+void CharVecPt::initData() { 
+	int index = 0;
+	data[index++] = localPos[0];
+	data[index++] = localPos[1];
+	data[index++] = localPos[2];
+
+	for (; index < data.size(); index++) {
+		// seed W with random values of +/- 1 mm
+		data[index] = boundedRand(-0.001, 0.001);
+	}
+}
+
+void CharVecPt::updateCurComponents(double *jointDofs) {
+	memset(curComponents, 0, sizeof(Vec3d) * cv->numComponents);
+
+	int comp, inf, degree;
+	int index = 0;
+
+	for (inf = 0; inf < numInfluences; inf++) {
+		double dof = jointDofs[influences[inf]];
+		double mult = dof;
+
+		for (degree = 0; degree < CV_DEGREE; degree++) {
+			for (comp = 0; comp < cv->numComponents; comp++) {
+				curComponents[comp] += dof * Vec3d(data[index+0], data[index+1], data[index+2]);
+				index += 3;
+			}
+			dof *= mult;
+		}
+	}
+}
+
+void CharVecPt::updateLocalPos(double *n, int nSize) {
+	int comp;
+
+	if (nSize < 0)
+		nSize = cv->numComponents;
+	if (nSize > cv->numComponents)
+		nSize = cv->numComponents;
+	if (!n)
+		nSize = 1;
+
+	localPos = curComponents[0];	// assume n[0] = 1
+	if (!n) return;
+	for (comp = 1; comp < nSize; comp++) {
+		localPos += curComponents[comp] * n[comp];
+	}
+}
+
+int CharVecPt::getInfIndex(int inf) {
+	int i;
+	for (i=0; i < numInfluences; i++)
+		if (influences[i] == inf)
+			return i;
+	return -1;
+}
+
+/*
+Vec3d CharVecPt::calcDeriv(int index) {
+	switch (index) {
+	case 0:
+		return vec4to3(coord * Vec4d(1, 0, 0, 0));
+		break;
+	case 1:
+		return vec4to3(coord * Vec4d(0, 1, 0, 0));
+		break;
+	default:
+		return vec4to3(coord * Vec4d(0, 0, 1, 0));
+		break;
+	}
+
+}
+*/
+
+// CharVec ================================================
+
+void CharVec::createCylArm(int lSegs, int rSegs, double rad) {
+/*	tm = new TriMesh();
+	numPts = lSegs * rSegs;
+	cvPts = new CharVecPt[numPts];
+	tm->init(numPts, 2 * (lSegs - 1) * rSegs);
+
+	vis = false;
+
+	double elbowBlend = 0.2;
+	double wristBlend = 0.2;
+
+	int elbowPos = lSegs * 0.4;
+	int wristPos = lSegs * 0.9;
+
+	int shoulderQ = skel->transforms.lookupName("lShoulderQ");
+	int upperArmT = skel->transforms.lookupName("lUpperArmT");
+	int elbowA = skel->transforms.lookupName("lElbowA");
+	int forearmA = skel->transforms.lookupName("lForearmA");
+	int forearmT = skel->transforms.lookupName("lForearmT");
+	int wristA = skel->transforms.lookupName("lWristA");
+	int handT = skel->transforms.lookupName("lHandT");
+
+	int x, y, i;
+	int index = 0;
+	for (x=0; x < lSegs; x++) {
+		int joints[2];
+		int jointMin = -lSegs * 0.1;
+		int jointMax = lSegs * 0.4;
+
+		if (x >= wristPos) {
+			joints[0] = wristA;
+			joints[1] = handT;
+			jointMin = wristPos;
+			jointMax = lSegs;
+		}
+		else if (x >= elbowPos) {
+			joints[0] = elbowA;
+			joints[1] = forearmT;
+			jointMin = elbowPos;
+			jointMax = wristPos;
+		}
+		else {
+			joints[0] = shoulderQ;
+			joints[1] = upperArmT;
+		}
+
+		double relPos = (1.0 * x - jointMin) / (1.0 * jointMax - jointMin);
+		if (joints[0] == wristA)
+			relPos /= 1.5;
+
+		for (y=0; y < rSegs; y++) {
+			cvPts[index].init(2);
+			cvPts[index].pInfluences[0] = joints[0];
+			cvPts[index].pInfluences[1] = joints[1];
+			cvPts[index].skinPosWeights[0] = 1.0 - relPos;
+			cvPts[index].skinPosWeights[1] = relPos;
+
+			if (joints[0] == shoulderQ) {
+				if (relPos > 1.0 - elbowBlend) {
+					cvPts[index].rInfluences[0] = shoulderQ;
+					cvPts[index].rInfluences[1] = elbowA;
+					cvPts[index].skinRotWeights[0] = (relPos - (1.0 - elbowBlend)) * (0.5 / elbowBlend);
+				}
+				else {
+					cvPts[index].rInfluences[0] = shoulderQ;
+					cvPts[index].rInfluences[1] = shoulderQ;
+					cvPts[index].skinRotWeights[0] = 1;
+				}
+			}
+			else if (joints[0] == elbowA) {
+				if (relPos < elbowBlend) {
+					cvPts[index].rInfluences[0] = shoulderQ;
+					cvPts[index].rInfluences[1] = elbowA;
+					cvPts[index].skinRotWeights[0] = 0.5 + relPos * (0.5 / elbowBlend);
+				}
+				else if (relPos < 1.0 - wristBlend) {
+					cvPts[index].rInfluences[0] = elbowA;
+					cvPts[index].rInfluences[1] = forearmA;
+					cvPts[index].skinRotWeights[0] = 1.0 - ((1.0 - wristBlend - relPos) / (1.0 - wristBlend - elbowBlend));
+				}
+				else {
+					cvPts[index].rInfluences[0] = forearmA;
+					cvPts[index].rInfluences[1] = wristA;
+					cvPts[index].skinRotWeights[0] = (relPos - (1.0 - wristBlend)) * (0.5 / wristBlend);
+				}
+			}
+			else {
+				if (relPos < wristBlend * 1.5) {
+					cvPts[index].rInfluences[0] = forearmA;
+					cvPts[index].rInfluences[1] = wristA;
+					cvPts[index].skinRotWeights[0] = 0.5 + relPos * (0.5 / (wristBlend*1.5));
+				}
+				else {
+					cvPts[index].rInfluences[0] = handT;
+					cvPts[index].rInfluences[1] = handT;
+					cvPts[index].skinRotWeights[0] = 1.0;
+				}
+			}
+
+			cvPts[index].axisRot = -2.0 * PI * y / rSegs;
+			cvPts[index].pValues[0] = Vec3d(0, rad, 0); //Vec3d(0, sin(2.0 * PI * y / rSegs) * rad, cos(2.0 * PI * y / rSegs) * rad);
+			for (i = 1; i < NUM_P_VALUES; i++)
+				cvPts[index].pValues[i] = Vec3d();
+
+			index++;
+		}
+	}
+
+	// now let's make some triangles
+	index = 0;
+	for (x=0; x < lSegs-1; x++) {
+		for (y=0; y < rSegs; y++) {
+			tm->addTri(x*rSegs + y, (x+1)*rSegs + ((y+1) % rSegs), x*rSegs + ((y+1) % rSegs));
+			tm->addTri(x*rSegs + y, (x+1)*rSegs + y, (x+1)*rSegs + ((y+1) % rSegs));
+		}
+	}
+	*/
+}
+
+void CharVec::createFromSkin(Skin &skin, int iNumComponents) {
+	int numInf, inf[30];
+
+	numComponents = iNumComponents;
+
+	cvPts = new CharVecPt[skin.numPts];
+	numPts = skin.numPts;
+	vis = false;
+
+	int abdomenT = skin.skel->transforms.lookupName("abdomenT");
+	int chestT = skin.skel->transforms.lookupName("chestT");
+	int lClavicleT = skin.skel->transforms.lookupName("lClavicleT");
+	int lUpperArmT = skin.skel->transforms.lookupName("lUpperArmT");
+	int lForearmT = skin.skel->transforms.lookupName("lForearmT");
+	int lHandT = skin.skel->transforms.lookupName("lHandT");
+	int rClavicleT = skin.skel->transforms.lookupName("rClavicleT");
+	int rUpperArmT = skin.skel->transforms.lookupName("rUpperArmT");
+	int rForearmT = skin.skel->transforms.lookupName("rForearmT");
+	int rHandT = skin.skel->transforms.lookupName("rHandT");
+	int lPelvisT = skin.skel->transforms.lookupName("lPelvisT");
+	int lThighT = skin.skel->transforms.lookupName("lThighT");
+	int lShinT = skin.skel->transforms.lookupName("lShinT");
+	int lFootT = skin.skel->transforms.lookupName("lFootT");
+	int lToeT = skin.skel->transforms.lookupName("lToeT");
+	int rPelvisT = skin.skel->transforms.lookupName("rPelvisT");
+	int rThighT = skin.skel->transforms.lookupName("rThighT");
+	int rShinT = skin.skel->transforms.lookupName("rShinT");
+	int rFootT = skin.skel->transforms.lookupName("rFootT");
+	int rToeT = skin.skel->transforms.lookupName("rToeT");
+	int neckT = skin.skel->transforms.lookupName("neckT");
+
+	int index;
+	for (index = 0; index < skin.numPts; index++) {
+		numInf = 1;
+		inf[0] = 0;
+		// waistA
+		if ((skin.points[index].getTransWeight(abdomenT) > 0) ||
+			(skin.points[index].getTransWeight(lPelvisT) > 0)) {
+			inf[numInf++] = 1;
+			inf[numInf++] = 2;
+			inf[numInf++] = 3;
+		}
+		// abdomenA
+		if ((skin.points[index].getTransWeight(abdomenT) > 0) ||
+			(skin.points[index].getTransWeight(chestT) > 0)) {
+			inf[numInf++] = 4;
+			inf[numInf++] = 5;
+			inf[numInf++] = 6;
+		}
+		// lClavicleA
+		if ((skin.points[index].getTransWeight(chestT) > 0) ||
+			(skin.points[index].getTransWeight(lClavicleT) > 0)) {
+			inf[numInf++] = 7;
+			inf[numInf++] = 8;
+			inf[numInf++] = 9;
+		}
+		// lShoulderA
+		if ((skin.points[index].getTransWeight(lClavicleT) > 0) ||
+			(skin.points[index].getTransWeight(lUpperArmT) > 0)) {
+			inf[numInf++] = 10;
+			inf[numInf++] = 11;
+			inf[numInf++] = 12;
+		}
+		// lElbowA and lForearmA
+		if ((skin.points[index].getTransWeight(lUpperArmT) > 0) ||
+			(skin.points[index].getTransWeight(lForearmT) > 0)) {
+			inf[numInf++] = 13;
+			inf[numInf++] = 14;
+		}
+		// lHandT
+		if ((skin.points[index].getTransWeight(lForearmT) > 0) ||
+			(skin.points[index].getTransWeight(lHandT) > 0)) {
+			inf[numInf++] = 15;
+		}
+		// rClavicleA
+		if ((skin.points[index].getTransWeight(chestT) > 0) ||
+			(skin.points[index].getTransWeight(rClavicleT) > 0)) {
+			inf[numInf++] = 16;
+			inf[numInf++] = 17;
+			inf[numInf++] = 18;
+		}
+		// rShoulderA
+		if ((skin.points[index].getTransWeight(rClavicleT) > 0) ||
+			(skin.points[index].getTransWeight(rUpperArmT) > 0)) {
+			inf[numInf++] = 19;
+			inf[numInf++] = 20;
+			inf[numInf++] = 21;
+		}
+		// rElbowA and rForearmA
+		if ((skin.points[index].getTransWeight(rUpperArmT) > 0) ||
+			(skin.points[index].getTransWeight(rForearmT) > 0)) {
+			inf[numInf++] = 22;
+			inf[numInf++] = 23;
+		}
+		// rHandT
+		if ((skin.points[index].getTransWeight(rForearmT) > 0) ||
+			(skin.points[index].getTransWeight(rHandT) > 0)) {
+			inf[numInf++] = 24;
+		}
+		// lHipQ
+		if ((skin.points[index].getTransWeight(lPelvisT) > 0) ||
+			(skin.points[index].getTransWeight(lThighT) > 0)) {
+			inf[numInf++] = 25;
+			inf[numInf++] = 26;
+			inf[numInf++] = 27;
+		}
+		// lKneeA and lShinA
+		if ((skin.points[index].getTransWeight(lThighT) > 0) ||
+			(skin.points[index].getTransWeight(lShinT) > 0)) {
+			inf[numInf++] = 28;
+			inf[numInf++] = 29;
+		}
+		// lAnkleA
+		if ((skin.points[index].getTransWeight(lShinT) > 0) ||
+			(skin.points[index].getTransWeight(lFootT) > 0)) {
+			inf[numInf++] = 30;
+		}
+		// lFootA
+		if ((skin.points[index].getTransWeight(lFootT) > 0) ||
+			(skin.points[index].getTransWeight(lToeT) > 0)) {
+			inf[numInf++] = 31;
+		}
+		// rHipQ
+		if ((skin.points[index].getTransWeight(rPelvisT) > 0) ||
+			(skin.points[index].getTransWeight(rThighT) > 0)) {
+			inf[numInf++] = 32;
+			inf[numInf++] = 33;
+			inf[numInf++] = 34;
+		}
+		// rKneeA and rShinA
+		if ((skin.points[index].getTransWeight(rThighT) > 0) ||
+			(skin.points[index].getTransWeight(rShinT) > 0)) {
+			inf[numInf++] = 35;
+			inf[numInf++] = 36;
+		}
+		// rAnkleA
+		if ((skin.points[index].getTransWeight(rShinT) > 0) ||
+			(skin.points[index].getTransWeight(rFootT) > 0)) {
+			inf[numInf++] = 37;
+		}
+		// rFootA
+		if ((skin.points[index].getTransWeight(rFootT) > 0) ||
+			(skin.points[index].getTransWeight(rToeT) > 0)) {
+			inf[numInf++] = 38;
+		}
+		// neck
+		if ((skin.points[index].getTransWeight(chestT) > 0) ||
+			(skin.points[index].getTransWeight(neckT) > 0)) {
+			inf[numInf++] = 39;
+			inf[numInf++] = 40;
+			inf[numInf++] = 41;
+		}
+		
+		cvPts[index].init(this, numInf);
+		memcpy(cvPts[index].influences, inf, numInf*sizeof(int));
+
+		cvPts[index].templateLocalPos = skin.points[index].localPos;
+		cvPts[index].localPos = cvPts[index].templateLocalPos;
+
+		cvPts[index].initData();
+	}
+
+	neighbors = findTMNeighbors(tm);
+}
+
+void CharVec::createFromMesh(TriMesh *mesh) {
+	tm = mesh;
+	numPts = tm->numPts();
+	cvPts = new CharVecPt[numPts];
+	vis = false;
+
+	int index;
+	for (index = 0; index < numPts; index++) {
+		cvPts[index].init(this, 0);
+	}
+
+	neighbors = findTMNeighbors(tm);
+}
+
+void CharVec::setFromLocalTM(Mat4d *localIFrames) {
+	int i;
+	for (i=0; i < numPts; i++) {
+		cvPts[i].localPos = localIFrames[i] * tm->getPt(i);
+	}
+}
+
+void CharVec::backupData() {
+	int pt;
+	for (pt=0; pt < numPts; pt++)
+		cvPts[pt].backup = cvPts[pt].data;
+}
+
+void CharVec::updateCurComponents(double *jointDofs) {
+	int pt;
+	for (pt=0; pt < numPts; pt++)
+		cvPts[pt].updateCurComponents(jointDofs);
+}
+
+void CharVec::updateLocalPos(double *n, int nSize) {
+	int pt;
+	for (pt=0; pt < numPts; pt++)
+		cvPts[pt].updateLocalPos(n, nSize);
+}
+
+void CharVec::updateTM(Mat4d *localFrames) {
+	int pt;
+	Vec3d curPos;
+
+	baAssert(numPts == tm->numPts(), "mismatched number of points updating tm", false);
+
+	for (pt=0; pt < numPts; pt++) {
+		if (localFrames)
+			curPos = localFrames[pt] * cvPts[pt].localPos;
+		else
+			curPos = scSkin.points[pt].localFrame * cvPts[pt].localPos;
+		tm->getPt(pt) = curPos;
+
+//		if (tm->gsPtColors()) {
+//			tm->getPtColor(pt) = Vec3d(0.8, 0.8, 0.8);
+//		}
+	}
+	tm->calcNormals();
+}
+
+void CharVec::render(int viewMode, Vec3d bkg) {
+	if (vis && tm) {
+		renderTriMesh(tm, viewMode, bkg);
+//		skel->drawGL();
+	}
+}
+
+void CharVec::dofsFromSkel(Skeleton *skel, double *dofs) {
+	int index = 0;
+	Vec3d euler;
+
+	dofs[index++] = 1;
+
+	// torso
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("waistQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("abdomenQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+
+	// left arm
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("lClavicleQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("lShoulderQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lElbowA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lForearmA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lWristA"))->curAngle;
+
+	// right arm
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("rClavicleQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("rShoulderQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rElbowA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rForearmA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rWristA"))->curAngle;
+
+	// left leg
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("lHipQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lKneeA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lShinA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lAnkleA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("lFootA"))->curAngle;
+
+	// right leg
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("rHipQ"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rKneeA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rShinA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rAnkleA"))->curAngle;
+	dofs[index++] = ((SkelEulerRotation*)skel->transforms.getT("rFootA"))->curAngle;
+
+	// neck
+	euler = matToEuler(((SkelQuatRotation*)skel->transforms.getT("neckR"))->curCoord.mat);
+	dofs[index++] = euler[0];
+	dofs[index++] = euler[1];
+	dofs[index++] = euler[2];
+}

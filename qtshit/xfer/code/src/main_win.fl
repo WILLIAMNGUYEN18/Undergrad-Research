@@ -1,0 +1,345 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0103 
+header_name {.h} 
+code_name {.cxx}
+decl {\#include "doppel2.h"} {selected public
+} 
+
+decl {\#include "viewer.h"} {public
+} 
+
+decl {\#include "cli.h"} {} 
+
+decl {int dispMode;} {public
+} 
+
+decl {\#include "doppel_config.h"} {} 
+
+class MainWin {open
+} {
+  Function {MainWin()} {open
+  } {
+    Fl_Window window {
+      label Doppel open
+      xywh {52 59 800 576} resizable
+      code0 {\#include "doppel2.h"}
+      code1 {\#include "Fl/fl_file_chooser.h"}
+      code2 {\#include <iostream>}
+      code3 {\#include <fstream>} visible
+    } {
+      Fl_Menu_Button resButton {
+        label 360x240 open
+        xywh {0 180 160 25}
+      } {
+        menuitem r320MI {
+          label 360x240
+          callback {viewerResize(320, 240, false);}
+          xywh {0 0 100 20}
+        }
+        menuitem r640MI {
+          label 640x480
+          callback {viewerResize(640, 480, false);}
+          xywh {0 0 100 20}
+        }
+        menuitem r720MI {
+          label 720x480
+          callback {viewerResize(720, 480, false);}
+          xywh {0 0 100 20}
+        }
+        menuitem r290MI {
+          label 290x575
+          callback {viewerResize(290, 575, false);}
+          xywh {10 10 100 20}
+        }
+        menuitem rOtherMI {
+          label {Other...}
+          callback {viewerResize(-1, -1, false);}
+          xywh {0 0 100 20}
+        }
+      }
+      Fl_Box viewer {
+        label viewer
+        xywh {160 0 640 575} box DOWN_BOX resizable
+        class Viewer
+      }
+      Fl_Box sepBox {
+        xywh {0 205 160 5} box THIN_DOWN_FRAME
+      }
+      Fl_Check_Button whiteCB {
+        label {White bkg}
+        callback {if (whiteCB->value()) {
+bkgColor[0] = 1;
+bkgColor[1] = 1;
+bkgColor[2] = 1;
+}
+else {
+bkgColor[0] = 0;
+bkgColor[1] = 0;
+bkgColor[2] = 0;
+}
+viewer->invalidate();
+viewer->redraw();}
+        xywh {0 525 25 25} down_box DIAMOND_DOWN_BOX
+      }
+      Fl_Button {} {
+        label {Save view...}
+        callback {saveView();}
+        xywh {0 550 80 25}
+      }
+      Fl_Button {} {
+        label {Load view...}
+        callback {loadView();}
+        xywh {80 550 80 25}
+      }
+      Fl_Button smButton {
+        callback {wfButton->color(FL_GRAY);
+hwButton->color(FL_GRAY);
+flButton->color(FL_GRAY);
+smButton->color(FL_YELLOW);
+displayMode(VM_SMOOTH);
+wfButton->redraw();
+hwButton->redraw();
+flButton->redraw();}
+        image {../icons/cube-smooth.gif} xywh {120 45 40 40} color 3
+      }
+      Fl_Button flButton {
+        callback {wfButton->color(FL_GRAY);
+hwButton->color(FL_GRAY);
+flButton->color(FL_YELLOW);
+smButton->color(FL_GRAY);
+displayMode(VM_FLAT | VM_WF_ON);
+wfButton->redraw();
+hwButton->redraw();
+smButton->redraw();}
+        image {../icons/cube-flat.gif} xywh {80 45 40 40}
+      }
+      Fl_Button hwButton {
+        callback {wfButton->color(FL_GRAY);
+hwButton->color(FL_YELLOW);
+flButton->color(FL_GRAY);
+smButton->color(FL_GRAY);
+displayMode(VM_HIDDEN_LINE);
+wfButton->redraw();
+flButton->redraw();
+smButton->redraw();}
+        image {../icons/cube-hwf.gif} xywh {40 45 40 40}
+      }
+      Fl_Button wfButton {
+        callback {wfButton->color(FL_YELLOW);
+hwButton->color(FL_GRAY);
+flButton->color(FL_GRAY);
+smButton->color(FL_GRAY);
+displayMode(VM_WIREFRAME);
+hwButton->redraw();
+flButton->redraw();
+smButton->redraw();}
+        image {../icons/cube-wf.gif} xywh {0 45 40 40}
+      }
+      Fl_Button rsButton {
+        callback {rsButton->color(FL_YELLOW);
+rlButton->color(FL_GRAY);
+rlButton->redraw();
+viewer->controlMode = 0;}
+        image {../icons/rot-obj.gif} xywh {40 0 40 40} color 3
+      }
+      Fl_Button {} {
+        callback {viewer->screenshot();}
+        image {../icons/camera.gif} xywh {20 90 40 40}
+      }
+      Fl_Button rlButton {
+        callback {rlButton->color(FL_YELLOW);
+rsButton->color(FL_GRAY);
+rsButton->redraw();
+viewer->controlMode = 1;}
+        image {../icons/rot-light.gif} xywh {80 0 40 40}
+      }
+      Fl_Button {} {
+        callback {viewer->home();
+viewer->redraw();}
+        image {../icons/home.gif} xywh {100 90 40 40}
+      }
+      Fl_Check_Button videoCB {
+        label Video
+        callback {viewerResize(720, 480, videoCB->value() != 0);}
+        xywh {90 525 25 25} down_box DIAMOND_DOWN_BOX
+      }
+      Fl_Button {} {
+        label RIB
+        callback {viewer->saveRIB();}
+        xywh {60 90 40 40}
+      }
+      Fl_Button bSkelButton {
+        callback {showSkel = !showSkel;
+if (showSkel)
+  bSkelButton->color(FL_YELLOW);
+else
+  bSkelButton->color(FL_GRAY);
+bSkelButton->redraw();
+redrawV();}
+        image {../icons/body-skel.gif} xywh {15 135 40 40}
+      }
+      Fl_Button bTemplateButton {
+        callback {showTemplate = !showTemplate;
+if (showTemplate)
+  bTemplateButton->color(FL_YELLOW);
+else
+  bTemplateButton->color(FL_GRAY);
+bTemplateButton->redraw();
+redrawV();}
+        image {../icons/body-template.gif} xywh {55 135 40 40}
+      }
+      Fl_Button bDefButton {
+        callback {showDef = !showDef;;
+if (showDef)
+  bDefButton->color(FL_YELLOW);
+else
+  bDefButton->color(FL_GRAY);
+bDefButton->redraw();
+redrawV();}
+        image {../icons/body-def.gif} xywh {95 135 40 40}
+      }
+      Fl_Check_Button lightingCB {
+        callback {lightingEnabled = (lightingCB->value() != 0);
+if (!lightingEnabled)
+	dispMode = dispMode & (~(VM_SURF_FLAT | VM_SURF_SMOOTH));
+redrawV();}
+        xywh {125 10 25 25} down_box DIAMOND_DOWN_BOX value 1
+      }
+      Fl_Input cmdInput {
+        callback {processCommand(cmdInput->value());
+presetMB->add(fixLabel(cmdInput->value()), "", (Fl_Callback*)cb_procLabel, strdup(cmdInput->value()));}
+        xywh {5 440 150 25}
+      }
+      Fl_Button {} {
+        label {Run script...}
+        callback {char *fname = fl_file_chooser(
+	"Run script...",
+	"*.txt",
+	NULL);
+if (fname) {
+  processFile(fname);
+}}
+        xywh {5 503 150 25}
+      }
+      Fl_Menu_Button presetMB {
+        label {Preset commands} open
+        xywh {5 472 150 25}
+      } {}
+    }
+    code {viewer->mainWin = this;
+videoAspect = false;
+cmdInput->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
+ifstream in("cmds.txt");
+if (in.good()) {
+  char s[1024];
+  while (in.good()) {
+    in.getline(s, 1023);
+    if (strlen(s) > 0) {
+      presetMB->add(fixLabel(s), "", (Fl_Callback*)cb_procLabel, strdup(s));
+    }
+  }
+  in.close();
+}} {}
+  }
+  Function {viewerResize(int x, int y, bool video)} {open
+  } {
+    code {if (x < 0) {
+ // ...
+}
+int newW = window->w() + x - viewer->w();
+int newH = window->h() + y - viewer->h();
+videoAspect = video;
+window->resize(window->x(), window->y(), newW, newH);
+updateResButton();} {}
+  }
+  Function {updateResButton()} {open
+  } {
+    code {static char str[80];
+sprintf(str, "%dx%d", viewer->w(), viewer->h());
+resButton->label(str);} {}
+  }
+  Function {displayMode(int mode)} {open return_type void
+  } {
+    code {dispMode = mode;
+if (!lightingEnabled)
+	dispMode = dispMode & (~(VM_SURF_FLAT | VM_SURF_SMOOTH));
+viewer->redraw();} {}
+  }
+  Function {saveView()} {open
+  } {
+    code {char *fname = fl_file_chooser("L",
+ "*.ca.txt",
+ NULL);
+if (fname == NULL)
+ return;
+
+ofstream out(fname);
+if (!out.good()) {
+  cout << "can't open " << fname << endl;
+  return;
+}
+saveLoad.saveInstance(out, &viewer->camera);
+out.close();} {}
+  }
+  Function {loadView()} {open
+  } {
+    code {char *fname = fl_file_chooser("L",
+ "*.ca.txt",
+ NULL);
+if (fname == NULL)
+ return;
+
+ifstream in(fname);
+if (!in.good()) {
+  cout << "can't open " << fname << endl;
+  return;
+}
+saveLoad.loadInstance(in, &viewer->camera);
+in.close();
+viewer->invalidate();
+viewer->redraw();} {}
+  }
+  decl {vector<Tool*> tools;} {public
+  }
+  Function {cb_button(Fl_Button* o, void* v)} {open return_type {static void}
+  } {
+    code {((MainWin*)(o->parent()->user_data()))->cb_button_i(o,v);} {}
+  }
+  Function {cb_button_i(Fl_Button*o, void*)} {return_type {inline void}
+  } {
+    code {int i;
+for (i=0; i < tools.size(); i++)
+ if (strcmp(tools[i]->name, o->label()) == 0) {
+   tools[i]->show();
+ }} {}
+  }
+  Function {addTool(Tool *tool)} {open return_type void
+  } {
+    code {tools.push_back(tool);
+Fl_Button* o = new Fl_Button(10, 185 + 25*tools.size(), 135, 25, tool->name);
+o->callback((Fl_Callback*)cb_button);
+window->add(o);} {}
+  }
+  decl {bool videoAspect;} {public
+  }
+  Function {cb_procLabel(Fl_Menu_*m, void*s)} {open return_type {static void}
+  } {
+    code {processCommand((char*)s);} {}
+  }
+  Function {fixLabel(const char *s)} {
+    callback {processCommand(cmdIn->value());
+presetMB->add(fixLabel(cmdIn->value()), "", (Fl_Callback*)cb_procLabel, strdup(cmdIn->value()));} open return_type {char *}
+  } {
+    code {static char fn[1024];
+int i, i2 = 0;
+for (i=0; i < 1023; i++) {
+  if (s[i] == 0)
+    break;
+  if (s[i] == '/' || s[i] == '\\\\' || s[i] == '&' || s[i] == '_')
+    fn[i2++] = '\\\\';
+  fn[i2++] = s[i];
+}
+fn[i2] = 0;
+return fn;} {}
+  }
+} 

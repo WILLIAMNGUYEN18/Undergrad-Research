@@ -1,0 +1,405 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0103 
+header_name {.h} 
+code_name {.cxx}
+decl {\#include "doppel2.h"} {public
+} 
+
+decl {\#include "skeleton.h"} {public
+} 
+
+decl {\#include "uMaster.h"} {} 
+
+decl {\#include "uSkin.h"} {} 
+
+decl {\#include "propui.h"} {public
+} 
+
+decl {\#include "cli.h"} {} 
+
+decl {void updateSkel(PropUI *);} {public
+} 
+
+class UniUI {open : {public Tool}
+} {
+  Function {UniUI()} {open
+  } {
+    Fl_Window uWindow {
+      label Uni open
+      xywh {423 325 664 497}
+      code0 {\#include "tool.h"}
+      code1 {\#include "Fl/fl_file_chooser.h"} visible
+    } {
+      Fl_Scroll skelScroll {open
+        xywh {5 5 650 245} type HORIZONTAL box DOWN_BOX
+      } {}
+      Fl_Button {} {
+        label {Load pose...}
+        callback {char *fname = fl_file_chooser("Load pose...", "*.po.txt", NULL);
+if (fname) {
+  ifstream in;
+  if (!openIFStream(&in, fname, "pose")) {
+    return;
+  }
+  skin.skel->loadPose(in);
+  uUpdateFromSkel();
+}}
+        xywh {10 265 85 25}
+      }
+      Fl_Button {} {
+        label {Save pose...}
+        callback {char *fname = fl_file_chooser("Save pose...", "*.po.txt", NULL);
+if (fname) {
+  ofstream out;
+  if (!openOFStream(&out,fname, "pose file")){
+    return;
+  }
+  skin.skel->savePose(out);
+  out.close();
+}}
+        xywh {100 265 85 25}
+      }
+      Fl_Browser showBrowser {
+        callback {if (showTargetCB->value() == 0){
+  uShow(showBrowser->value()-1);
+  cout << "showing " << showBrowser->value()-1 << endl;
+}
+else
+  uShow(-(showBrowser->value()-1));}
+        xywh {30 295 185 200} type Hold
+      }
+      Fl_Button {} {
+        label Update
+        callback {showBrowser->clear();
+int i;
+for (i=0; i < dataSet.numExamples; i++) {
+  showBrowser->add(dataSet.examples[i].fname);
+}
+sl1->value(curComps[0]);
+sl2->value(curComps[1]);
+sl3->value(curComps[2]);
+sl4->value(curComps[3]);
+sl5->value(curComps[4]);
+sl6->value(curComps[5]);
+sl7->value(curComps[6]);
+sl8->value(curComps[7]);
+sl9->value(curComps[8]);
+sl10->value(curComps[9]);}
+        xywh {220 315 85 25}
+      }
+      Fl_Check_Button showTargetCB {
+        label {Show target}
+        callback {uShow(-visSkel);
+if (!showTargetCB->value()) {
+  uColor("");
+}}
+        xywh {220 345 25 25} down_box DOWN_BOX
+      }
+      Fl_Group {} {open
+        xywh {340 260 310 85} box DOWN_FRAME
+      } {
+        Fl_Value_Input surfVI {
+          label {Surface:}
+          xywh {435 265 50 25}
+        }
+        Fl_Value_Input smoothVI {
+          label {Smoothness:}
+          xywh {435 290 50 25}
+        }
+        Fl_Value_Input markersVI {
+          label {Markers:}
+          xywh {435 315 50 25}
+        }
+        Fl_Button {} {
+          label Start
+          callback {char cmd[256];
+sprintf(cmd,"uEdgeMatchSolve %f %f 0 %f 10000",surfVI->value(),smoothVI->value(),markersVI->value());
+processCommand(cmd);}
+          xywh {510 270 100 25}
+        }
+        Fl_Button {} {
+          label Stop
+          callback {processCommand("uEdgeMatchStopSolve");}
+          xywh {510 300 100 25}
+        }
+      }
+      Fl_Check_Button showMarkersCB {
+        label {Show markers}
+        callback {showMarkers = showMarkersCB->value() != 0;
+redrawV();}
+        xywh {340 355 25 25} down_box DOWN_BOX
+      }
+      Fl_Button {} {
+        label {Sliders...}
+        callback {sliderWin->show();}
+        xywh {345 435 115 25}
+      }
+      Fl_Button {} {
+        label {Mocap...}
+        callback {mocapWin->show();}
+        xywh {345 405 115 25}
+      }
+      Fl_Button {} {
+        label {Skinning weights...}
+        callback {swWin->show();}
+        xywh {470 405 125 25}
+      }
+      Fl_Button {} {
+        label {PDD weights...}
+        callback {pddWin->show();}
+        xywh {470 435 125 25}
+      }
+      Fl_Round_Button nmNoneRB {
+        label {No normal maps}
+        callback {showTex = false;
+redrawV();}
+        xywh {220 390 25 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Round_Button nmSoftwareRB {
+        label {Software NMs}
+        callback {showTex = true;
+softwareNM = true;
+updateMesh();
+redrawV();}
+        xywh {220 410 25 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Round_Button nmHardwareRB {
+        label {Hardware NMs}
+        callback {showTex = true;
+softwareNM = false;
+redrawV();}
+        xywh {220 430 25 25} type Radio down_box ROUND_DOWN_BOX value 1
+      }
+    }
+    code {name="Uni";} {}
+    Fl_Window mocapWin {
+      label Mocap open
+      xywh {391 222 479 124} visible
+    } {
+      Fl_Button {} {
+        label {Load...}
+        callback {char *fname = fl_file_chooser("Load mocap...", "*.{amc,csv,dof}", NULL);
+if (fname) {
+  mocapPoses.load(fname);
+  frameVS->maximum(mocapPoses.numFrames-1);
+}} selected
+        xywh {10 10 85 25}
+      }
+      Fl_Value_Slider frameVS {
+        label {Frame:}
+        callback {mocapPoses.frameToSkel(frameVS->value(), skin.skel);
+uShowComps();}
+        xywh {10 60 460 25} type {Horz Knob} align 5 step 1
+      }
+      Fl_Value_Slider stepVS {
+        label {Step:}
+        callback {frameVS->step((int)stepVS->value(),1);}
+        xywh {335 20 130 25} type {Horz Knob} align 4 minimum 1 maximum 10 step 1 value 1
+      }
+    }
+    Fl_Window sliderWin {
+      label Sliders open
+      xywh {792 144 345 378} visible
+    } {
+      Fl_Scroll {} {open
+        xywh {10 10 325 305} box DOWN_FRAME
+      } {
+        Fl_Value_Slider sl1 {
+          label 1
+          callback {updateFromSliders();}
+          xywh {30 20 275 25} type {Horz Knob} align 4 minimum -2 maximum 2 value 1
+        }
+        Fl_Value_Slider sl2 {
+          label 2
+          callback {updateFromSliders();}
+          xywh {30 50 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl3 {
+          label 3
+          callback {updateFromSliders();}
+          xywh {30 80 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl4 {
+          label 4
+          callback {updateFromSliders();}
+          xywh {30 110 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl5 {
+          label 5
+          callback {updateFromSliders();}
+          xywh {30 140 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl6 {
+          label 6
+          callback {updateFromSliders();}
+          xywh {30 170 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl7 {
+          label 7
+          callback {updateFromSliders();}
+          xywh {30 200 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl8 {
+          label 8
+          callback {updateFromSliders();}
+          xywh {30 230 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl9 {
+          label 9
+          callback {updateFromSliders();}
+          xywh {30 260 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+        Fl_Value_Slider sl10 {
+          label 10
+          callback {updateFromSliders();}
+          xywh {30 290 275 25} type {Horz Knob} align 4 minimum -2 maximum 2
+        }
+      }
+    }
+    Fl_Window swWin {
+      label {Skinning weights} open
+      xywh {315 394 401 347} visible
+    } {
+      Fl_Browser bTransforms {
+        label {Transforms:}
+        callback {if (bTransforms->value() > 0) {
+  spTransform = bTransforms->value() - 1;
+  char s[80];
+  sprintf(s, "%d", spTransform);
+  uColor(s);
+}}
+        xywh {145 25 245 150} type Hold align 5
+      }
+      Fl_Round_Button rNoPaint {
+        label {No painting}
+        callback {spMode = 0;}
+        xywh {5 15 25 25} type Radio down_box ROUND_DOWN_BOX value 1
+      }
+      Fl_Round_Button rPaint {
+        label Paint
+        callback {spMode = 1;
+updateSPDisplay();}
+        xywh {5 35 25 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Value_Slider vsWeight {
+        label {Weight:}
+        callback {spIntensity = vsWeight->value();}
+        xywh {70 185 315 25} type Horizontal align 4 value 1
+      }
+      Fl_Value_Slider vsInnerRadius {
+        label {Inner rad:}
+        callback {spInnerRadius = vsInnerRadius->value();}
+        xywh {70 215 315 25} type Horizontal align 4 maximum 0.2 step 0.005 value 0.01
+      }
+      Fl_Value_Slider vsOuterRadius {
+        label {Outer rad:}
+        callback {spOuterRadius = vsOuterRadius->value();}
+        xywh {70 245 315 25} type Horizontal align 4 maximum 0.2 step 0.005 value 0.01
+      }
+      Fl_Round_Button rPaintG {
+        label {Paint if greater}
+        callback {spMode = 2;
+updateSPDisplay();}
+        xywh {5 55 25 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Round_Button rPaintL {
+        label {Paint if less}
+        callback {spMode = 3;
+updateSPDisplay();}
+        xywh {5 75 25 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Round_Button rSmooth {
+        label Smooth
+        callback {spMode = 4;
+updateSPDisplay();}
+        xywh {5 95 25 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Button {} {
+        label {Save weights}
+        callback {processCommand("uSaveWeights data/weights.dat");}
+        xywh {10 290 115 25}
+      }
+      Fl_Check_Button spGeodesicCB {
+        label Geodesic
+        callback {spGeodesic = spGeodesicCB->value() != 0;}
+        xywh {175 275 25 25} down_box DOWN_BOX value 1
+      }
+      Fl_Check_Button spAutoExtendCB {
+        label {Auto-extend}
+        callback {spAutoExtend = spAutoExtendCB->value() != 0;}
+        xywh {175 295 25 25} down_box DOWN_BOX
+      }
+      Fl_Check_Button spAutoUpdateCB {
+        label {Auto-update}
+        callback {spAutoUpdate = spAutoUpdateCB->value() != 0;}
+        xywh {175 315 25 25} down_box DOWN_BOX
+      }
+    }
+    Fl_Window pddWin {
+      label {PDD weights} open
+      xywh {447 245 375 256} visible
+    } {
+      Fl_Value_Slider pdd0VS {
+        label {PDD 0:}
+        xywh {10 55 355 25} type Horizontal align 5
+      }
+      Fl_Value_Slider pdd1VS {
+        label {PDD 1:}
+        xywh {10 100 355 25} type Horizontal align 5
+      }
+      Fl_Value_Slider pdd2VS {
+        label {PDD 2:}
+        xywh {10 145 355 25} type Horizontal align 5
+      }
+      Fl_Value_Slider pdd3VS {
+        label {PDD 3:}
+        xywh {10 190 355 25} type Horizontal align 5
+      }
+      Fl_Input pddJointTI {
+        label {Joint:}
+        callback {setPDDWJoint(pddJointTI->value());}
+        xywh {45 10 140 25} when 8
+      }
+    }
+  }
+  Function {show()} {open
+  } {
+    code {uWindow->show();} {}
+  }
+  decl {virtual void drawGL();} {public
+  }
+  Function {initSkel(Skeleton *skel)} {open return_type void
+  } {
+    code {PObject *obj = new PObject(skel);
+obj->create("USkeleton", 5, 5, skelScroll);
+obj->editCB = updateSkel;} {}
+  }
+  Function {updateFromSliders()} {open return_type void
+  } {
+    code {curComps[0] = sl1->value();
+curComps[1] = sl2->value();
+curComps[2] = sl3->value();
+curComps[3] = sl4->value();
+curComps[4] = sl5->value();
+curComps[5] = sl6->value();
+curComps[6] = sl7->value();
+curComps[7] = sl8->value();
+curComps[8] = sl9->value();
+curComps[9] = sl10->value();
+
+uShowComps();} {}
+  }
+  decl {virtual bool startDragGL(GLuint *nameBuf, int x, int y);} {public
+  }
+  decl {virtual void dragGL(int x, int y);} {public
+  }
+  Function {updateSPDisplay()} {open return_type void
+  } {
+    code {if (bTransforms->size() == 0) {
+  int i;
+  for (i=0; i < skin.skel->transforms.size(); i++) {
+    bTransforms->add(skin.skel->transforms.getT(i)->name);
+  }
+}} {}
+  }
+} 

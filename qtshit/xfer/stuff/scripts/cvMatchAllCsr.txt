@@ -1,0 +1,13 @@
+set RES 10k
+scInitSCMesh data/james-{RES}.ply ../posedata/ply/2_A.po.txt data/2a-{RES}.ply
+scCalcTransInfluences
+scUpdateLocal
+
+cvInitFromSkin 1
+cvAutoUpdate
+cvBuildExampleSet data/set-csr-{RES}.txt
+
+set CMD scripts/cvMatchCsr.txt
+//set CMD scripts/cvMatchCsr-hi.txt
+
+//x scripts/cmdCsr.txt

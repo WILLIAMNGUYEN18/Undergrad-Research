@@ -1,0 +1,18 @@
+uStartSolver 0 5
+uStartSolver 8 5
+uSaveSolve data/solve-10k-f1p.dat
+uStartSolver 0 10
+uStartSolver 8 5
+uSaveSolve data/solve-10k-f1p.dat
+uStartSolver 0 20
+uStartSolver 8 5
+uSaveSolve data/solve-10k-f1p.dat
+uStartSolver 0 20
+uStartSolver 8 5
+uSaveSolve data/solve-10k-f1p.dat
+uStartSolver 0 30
+uStartSolver 8 10
+uSaveSolve data/solve-10k-f1p.dat
+uStartSolver 0 40
+uStartSolver 8 10
+uSaveSolve data/solve-10k-f1p.dat

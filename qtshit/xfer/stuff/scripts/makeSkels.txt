@@ -1,0 +1,2 @@
+set CMD scripts/makeSkel.txt
+x scripts/proc{VER}.txt

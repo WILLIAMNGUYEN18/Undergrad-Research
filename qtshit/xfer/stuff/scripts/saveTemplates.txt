@@ -1,0 +1,44 @@
+set ID 9001
+set CHAR_ID 0
+set BASE_ID 0
+uShow {BASE_ID}
+!makeSkel
+uPoseToEx {BASE_ID}
+uDressFromEx {BASE_ID}
+uSaveSkinPts {CHAR_ID} ../ganger/tia/disp/%s%c.disp
+
+set ID 9002
+set CHAR_ID 1
+set BASE_ID 16
+uShow {BASE_ID}
+!makeSkel
+uPoseToEx {BASE_ID}
+uDressFromEx {BASE_ID}
+uSaveSkinPts {CHAR_ID} ../ganger/tia/disp/%s%c.disp
+
+set ID 9003
+set CHAR_ID 2
+set BASE_ID 32
+uShow {BASE_ID}
+!makeSkel
+uPoseToEx {BASE_ID}
+uDressFromEx {BASE_ID}
+uSaveSkinPts {CHAR_ID} ../ganger/tia/disp/%s%c.disp
+
+set ID 9007
+set CHAR_ID 3
+set BASE_ID 48
+uShow {BASE_ID}
+!makeSkel
+uPoseToEx {BASE_ID}
+uDressFromEx {BASE_ID}
+uSaveSkinPts {CHAR_ID} ../ganger/tia/disp/%s%c.disp
+
+set ID 9008
+set CHAR_ID 4
+set BASE_ID 64
+uShow {BASE_ID}
+!makeSkel
+uPoseToEx {BASE_ID}
+uDressFromEx {BASE_ID}
+uSaveSkinPts {CHAR_ID} ../ganger/tia/disp/%s%c.disp

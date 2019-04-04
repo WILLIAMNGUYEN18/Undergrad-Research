@@ -1,0 +1,30 @@
+uStartSolver n 40
+uSaveSolve data/solve-md6.dat
+uAutoWeight
+uStartSolver m 10
+uSaveSolve data/solve-md6.dat
+uAutoWeight
+uStartSolver n 10
+uSaveSolve data/solve-md6.dat
+uStartSolver m 10
+uSaveSolve data/solve-md6.dat
+uStartSolver n 10
+uSaveSolve data/solve-md6.dat
+uStartSolver m 10
+uSaveSolve data/solve-md6.dat
+uStartSolver n 10
+uSaveSolve data/solve-md6.dat
+uStartSolver m 10
+uSaveSolve data/solve-md6.dat
+uStartSolver n 100
+uSaveSolve data/solve-md6.dat
+uStartSolver m 100
+uSaveSolve data/solve-md6.dat
+uStartSolver n 100
+uSaveSolve data/solve-md6.dat
+uStartSolver m 100
+uSaveSolve data/solve-md6.dat
+uStartSolver n 100
+uSaveSolve data/solve-md6.dat
+uStartSolver m 100
+uSaveSolve data/solve-md6.dat

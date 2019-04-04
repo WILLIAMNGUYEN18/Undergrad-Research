@@ -1,0 +1,6 @@
+uLoadSolve data/solve-10k-f.dat
+//!pdds
+//uLoadSolve data/solve-10k-fp.dat
+//uEStep
+
+

@@ -1,0 +1,50 @@
+//set RES mkr
+set RES 2k
+//set RES 10k
+//set RES 60k
+//set RES mocap
+//set VER -m
+set VER -f
+//set VER
+uLoadExampleSet data/ex-{RES}{VER}.txt
+//uLoadPddMask data/pddmask-{RES}.dat
+
+uLoadMu data/zero.txt
+
+// phase 1
+//uLoadMu data/pca-mu-mkr{VER}.txt data/pca-var-mkr{VER}.txt
+//uLoadSolve data/solve-mkr{VER}.dat
+// phase 2
+uLoadMu data/mu-mkr{VER}.dat
+uLoadPoses data/poses-mkr{VER}.dat
+uLoadWeights data/weights-painted-2k.dat
+//uLoadWeights data/weights-painted-2k.dat data/map-2k-10k.dat
+// phase 3
+//uLoadMu data/mu-2k{VER}.dat
+//uLoadPoses data/poses-2k{VER}.dat
+//uLoadWeights data/weights-2k-f.dat data/map-2k-10k.dat
+//
+//uLoadSolve data/solve-10k.dat
+//uLoadPoses data/poses-2k.dat
+
+
+//uLoadWeights data/weights-2k-f.dat data/map-2k-10k.dat
+//uLoadSolve data/solve-{RES}{VER}.dat
+//uLoadPdds data/pdds-{RES}{VER}.dat
+//uLoadSolve data/solve-{RES}{VER}p.dat
+
+//uLoadWeights data/weights-10k-f1p.dat
+//uLoadPdds data/pdds-10k-f1p.dat
+//uLoadPoses data/poses-mocap-m.dat
+//uLoadDress data/dress-10k-f1p.dat
+//uLoadInt data/int-10k-f1p.dat
+//uSkelFromRecon
+//uLoadPoses data/poses-walk.dat
+
+// 60k
+//uLoadWeights data/weights-10k.dat data/map-10k-60k.dat
+//uLoadPoses data/poses-10k.dat
+//uLoadMu data/mu-10k.dat
+
+
+uShow 0

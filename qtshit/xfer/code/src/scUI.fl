@@ -1,0 +1,136 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0103 
+header_name {.h} 
+code_name {.cxx}
+decl {\#include "doppel2.h"} {} 
+
+decl {\#include "cli.h"} {} 
+
+decl {\#include "skeleton.h"} {} 
+
+decl {\#include "skinCalc.h"} {} 
+
+decl {\#include "propui.h"} {public
+} 
+
+decl {\#include "trimesh.h"} {} 
+
+decl {\#include "trimesh_render.h"} {} 
+
+decl {extern Skeleton *matchSkel;} {} 
+
+decl {extern Skin curSkin, scSkin;} {} 
+
+decl {extern Skeleton *scSkel;} {} 
+
+decl {extern TriMesh *scMesh;} {} 
+
+class SCUI {open : {public Tool}
+} {
+  Function {SCUI()} {open
+  } {
+    Fl_Window scWindow {
+      label SkinCalc
+      callback {showSkel();} open
+      xywh {320 159 380 377}
+      code0 {\#include "tool.h"}
+      code1 {\#include "Fl/fl_file_chooser.h"} visible
+    } {
+      Fl_Round_Button showRep {
+        label {show captured points}
+        callback {redrawV();}
+        xywh {10 90 25 25} down_box ROUND_DOWN_BOX value 1
+      }
+      Fl_Round_Button showSkinPts {
+        label {show skinned points}
+        callback {redrawV();}
+        xywh {10 115 25 25} down_box ROUND_DOWN_BOX
+      }
+      Fl_Value_Slider replayVS {
+        label replay
+        callback {setMatchSkelFrame(replayVS->value());
+redrawV();}
+        xywh {60 45 295 25} type Horizontal align 4 maximum 999 step 1
+      }
+      Fl_Round_Button showSCMesh {
+        label {show SC mesh}
+        callback {redrawV();}
+        xywh {10 140 25 25} down_box ROUND_DOWN_BOX
+      }
+      Fl_Button {} {
+        label {Edit Skeleton}
+        callback {showSkel();}
+        xywh {40 205 120 25}
+      }
+      Fl_Round_Button showSCSkel {
+        label {show SC skel}
+        callback {redrawV();}
+        xywh {10 165 25 25} down_box ROUND_DOWN_BOX
+      }
+    }
+    code {name="SkinCalc";} {}
+    Fl_Window skelWindow {
+      label Skels open
+      xywh {237 154 1039 373} hide
+    } {
+      Fl_Scroll skelScroll {open
+        xywh {0 0 1035 340} type HORIZONTAL box DOWN_BOX
+      } {}
+      Fl_Button {} {
+        label {Load pose...}
+        callback {char *fname = fl_file_chooser("Load pose...", "*.po.txt", NULL);
+if (fname) {
+  ifstream in;
+  if (!openIFStream(&in, fname, "pose")) {
+    return;
+  }
+  scSkel->loadPose(in);
+}}
+        xywh {0 345 85 25}
+      }
+      Fl_Button {} {
+        label {Save pose...}
+        callback {char *fname = fl_file_chooser("Save pose...", "*.po.txt", NULL);
+//if (fname)
+//  savePose(fname);}
+        xywh {90 345 85 25}
+      }
+    }
+  }
+  Function {show()} {open
+  } {
+    code {scWindow->show();} {}
+  }
+  Function {drawGL()} {open return_type {virtual void}
+  } {
+    code {if (matchSkel) {
+ matchSkel->drawGL();
+ if (showRep->value() != 0)
+  renderMarkers(replayVS->value());
+ if (showSkinPts->value() != 0)
+  curSkin.renderPoints();
+}
+if (scMesh && showSCMesh->value() != 0) {
+	renderTriMesh(scMesh, dispMode, bkgColor);
+}
+if (scSkin.skel && showSCSkel->value() != 0) {
+ scSkin.skel->drawGL();
+}} {}
+  }
+  Function {showSkel()} {open
+  } {
+    code {skelWindow->show();
+//skelScroll->clear();
+PObject *obj = new PObject(scSkel);
+obj->create("SC Skeleton", 5, 5, skelScroll);
+obj->editCB = editCB;} {}
+  }
+  Function {editCB(PropUI*)} {open return_type {static void}
+  } {
+    code {scSkel->updateCoords();
+scSkin.updatePoints();
+scSkin.updateMesh(scMesh);
+redrawV();} {selected
+    }
+  }
+} 

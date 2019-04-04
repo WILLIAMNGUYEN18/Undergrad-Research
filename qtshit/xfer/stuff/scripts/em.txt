@@ -1,0 +1,24 @@
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolver data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat
+uEStep
+uStartSolver 0 10
+uSaveSolve data/solve2.dat

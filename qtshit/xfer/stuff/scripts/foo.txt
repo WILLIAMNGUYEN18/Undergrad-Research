@@ -1,0 +1,93 @@
+//uRenormalizeX
+//uStartSolver dpbq 100
+//uAutoWeight
+
+uStartSolver dp 10
+uStartSolver bq 10
+uStartSolver x 10
+uRenormalizeX
+uStartSolver dbqwp 10
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 10
+uStartSolver bq 10
+uStartSolver x 10
+uRenormalizeX
+uStartSolver dbqwp 10
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 10
+uStartSolver bq 10
+uStartSolver x 10
+uRenormalizeX
+uStartSolver dbqwp 10
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 10
+uStartSolver bq 10
+uStartSolver x 10
+uRenormalizeX
+uStartSolver dbqwp 10
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 20
+uStartSolver bq 20
+uStartSolver x 20
+uRenormalizeX
+uStartSolver dbqwp 20
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 20
+uStartSolver bq 20
+uStartSolver x 20
+uRenormalizeX
+uStartSolver dbqwp 20
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 20
+uStartSolver bq 20
+uStartSolver x 20
+uRenormalizeX
+uStartSolver dbqwp 20
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 20
+uStartSolver bq 20
+uStartSolver x 20
+uRenormalizeX
+uStartSolver dbqwp 20
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 50
+uStartSolver bq 50
+uStartSolver x 50
+uRenormalizeX
+uStartSolver dbqwp 50
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 50
+uStartSolver bq 50
+uStartSolver x 50
+uRenormalizeX
+uStartSolver dbqwp 50
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+uStartSolver dp 50
+uStartSolver bq 10
+uStartSolver x 10
+uRenormalizeX
+uStartSolver dbqwp 20
+uSaveSolve data/solve-md4.dat
+uSaveWeights data/weights-md4.dat
+
+!foo2

@@ -1,0 +1,75 @@
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve-{RES}-pdd.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve-{RES}-pdd.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve-{RES}-pdd.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve-{RES}-pdd.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve-{RES}-pdd.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve-{RES}-pdd.dat
+// done

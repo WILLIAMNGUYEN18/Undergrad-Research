@@ -1,0 +1,34 @@
+set ID 9010
+set L1 e
+set L2 ze
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 g
+set L2 zg
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 h
+set L2 zh
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 i
+set L2 zi
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 l
+set L2 zl
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 m
+set L2 zm
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 n
+set L2 zn
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 o
+set L2 zo
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 q
+set L2 zq
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 r
+set L2 zr
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr
+set L1 s
+set L2 zs
+uMirrorEx data/csr/csr{ID}{L1}.ply data/csr/csr{ID}{L1}.mkr data/csr/csr{ID}{L2}.ply data/csr/csr{ID}{L2}.mkr

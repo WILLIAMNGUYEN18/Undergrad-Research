@@ -1,0 +1,15 @@
+scInitSCMesh data/half-james-50k.ply
+scCalcTransInfluences
+scUpdateLocal
+
+cvInitFromSkin 1
+cvAutoUpdate
+<<<<<<< cvMatch.txt
+cvBuildExampleSet data/set-3-17.txt
+//cvInitSurfaceMatch 0 ../posedata/ply/1_A.mkr
+//cvRunSurfaceMatch 1 1 5
+//cvRunSurfaceMatch 10 1 1
+=======
+set ID 2
+cvBuildExampleSet data/set-{ID}-17.txt
+>>>>>>> 1.5

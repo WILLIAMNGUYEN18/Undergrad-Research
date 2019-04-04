@@ -1,0 +1,10 @@
+uDressFromEx 0
+uSaveSkinDisp 1 18 ../ganger/data/init-{RES}/%s%c.disp
+uDressFromEx 18
+uSaveSkinDisp 19 36 ../ganger/data/init-{RES}/%s%c.disp
+uDressFromEx 36
+uSaveSkinDisp 37 54 ../ganger/data/init-{RES}/%s%c.disp
+uDressFromEx 54
+uSaveSkinDisp 55 72 ../ganger/data/init-{RES}/%s%c.disp
+uDressFromEx 72
+uSaveSkinDisp 73 90 ../ganger/data/init-{RES}/%s%c.disp

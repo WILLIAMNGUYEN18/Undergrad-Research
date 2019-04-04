@@ -1,0 +1,2 @@
+uSkelFromSurf data/tia-bones-7k.mkr ../ganger/tia/7k/{ID}a.dat
+uSaveCurPose data/skels/{ID}a.po.txt

@@ -1,0 +1,8 @@
+cvInitSurfaceMatch {POSEID} data/csr/csr{CSR}a.lnd data/mrefs-{RES}.txt
+cvRunSurfaceMatch 2 0.01 5 100
+cvRunSurfaceMatch 1 1 2 10
+cvRunSurfaceMatch 10 1 2 10
+cvRunSurfaceMatch 2 1 2 10
+cvRunSurfaceMatch 5 0.1 0.1 100
+cvSaveDisp data/csr/csr{CSR}a-{RES}.disp
+cvSaveExample {POSEID} data/examples/csr{CSR}a-{RES}.ex

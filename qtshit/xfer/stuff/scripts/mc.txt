@@ -1,0 +1,3 @@
+cvLoadMocap c:/allen/ianROM3.dof
+
+cvLoadMocap data/mocap-punch-kick.txt

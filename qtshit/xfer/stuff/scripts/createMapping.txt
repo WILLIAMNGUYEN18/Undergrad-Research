@@ -1,0 +1,7 @@
+
+cvSaveMirrorMap data/mmap-james-10k.dat
+
+cvSaveMirrorMap data/mmap-james-50k.dat
+
+ 
+cvCreateMapping data/half-james-10k.ply data/half-james-50k.ply data/map-10k-50k.dat

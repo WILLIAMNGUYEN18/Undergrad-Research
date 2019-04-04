@@ -1,0 +1,23 @@
+/ANN.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/ANN.h/2.0/Wed Sep 17 17:49:11 2003//
+/ANNperf.h/2.0/Wed Sep 17 17:49:51 2003//
+/ANNx.h/2.0/Wed Sep 17 17:47:04 2003//
+/bd_pr_search.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/bd_search.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/bd_tree.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/bd_tree.h/2.0/Wed Mar  4 14:45:26 1998//
+/brute.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/kd_pr_search.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/kd_pr_search.h/2.0/Wed Mar  4 14:45:26 1998//
+/kd_search.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/kd_search.h/2.0/Wed Mar  4 14:45:26 1998//
+/kd_split.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/kd_split.h/2.0/Wed Mar  4 14:45:26 1998//
+/kd_tree.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/kd_tree.h/2.0/Wed Mar  4 14:45:26 1998//
+/kd_util.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/kd_util.h/2.0/Wed Mar  4 14:45:26 1998//
+/perf.cpp/2.0/Fri Nov 21 04:10:58 2003//
+/pr_queue.h/2.0/Wed Mar  4 14:45:26 1998//
+/pr_queue_k.h/2.0/Wed Mar  4 14:45:26 1998//
+D

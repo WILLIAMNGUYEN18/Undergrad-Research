@@ -1,0 +1,27 @@
+//set RES mkr
+set RES 7k
+//set RES mocap
+set VER -md
+uLoadExampleSet data/ex-{RES}{VER}.txt
+
+//uLoadMu data/mu-pca{VER}.txt
+uLoadMu data/zero.txt
+
+//uWeightsFromTex data/inf-tia/infinit.txt data/weights-{RES}-inf.dat
+//uLoadWeights data/weights-{RES}-inf.dat
+
+//uLoadWeights data/weights-{RES}.dat
+//uLoadTex data/tia-half-10k-tex.obj 1
+//uLoadPddDefs data/pdds.txt
+//uLoadSolve data/solve.dat
+//uShow 0
+
+//uLoadDress data/dress{VER}.dat
+//uLoadPdds data/pdds{VER}.dat
+//uLoadPoses data/bones{VER}.dat 1
+//uLoadWeights data/weights{VER}.dat
+
+
+uLoadWeights data/weights-m3.dat
+uLoadTex data/tia-half-7k-tex.obj 1
+uLoadPddDefs data/pdds.txt

@@ -1,0 +1,41 @@
+This archive implements a simple trust-region nonlinear least squares
+solver.  It is especially designed for large, sparse Hessians.  The
+algorithm here is due to Steihaug; please refer to "Numerical
+Optimization" by Nocedal for a full description (page 75).
+
+The code organization is far from well-designed; there may be bugs, as
+I ripped it out of my code to generalize it, and I haven't tested it
+as an independent component.  If you discover anything or improve it,
+email aseem@cs.washington.edu.
+
+There are two places you need to insert code.  One, towards the bottom
+of solver.C, in the routine 'solve', there is a function call to
+'something'.  This is a placeholder for your own code/routine.  This
+code should fill its instance of the Keeper class with the Hessian and
+gradient.
+
+The second place you fill in code is the Keeper class itself; it is
+only a stub right now.  This class holds the Hessian and gradient.  I
+assume you know the sparsity structure of your Hessian, and will hard
+code it here.  Otherwise, a general dense Hessian could easily be
+plugged in.
+
+What is this Hessian and gradient?  Well, let's say there are m terms
+in your nonlinear least squares objective function , theta = sum (f_i
+(x))^2, where i ranges from 1 to m.  Form an mxn Jacobian J where each
+row is the partial derivative of f_i(x) with respect to each of the n
+variables.  Then, the nxn Hessian is J'J, and the gradient is J'r,
+where r is the mx1 residual vector.  This is the error of each term,
+or just f(x) for the current estimate of the solution.  Of course, you
+probably don't want to actually calculate and store J entirely, but
+accrue its contribution to J'J and J'r row by row...
+
+You shouldn't need to touch the LinearSolver class.  The 'solve'
+routine is the actual call to perform the optimization.
+
+One more note: Standard solutions to this problem use a spherical
+trust region and the L2 norm; for my problem I prefer a rectangular
+trust region and the L-infinity norm.  There are comments in solver.C
+which tell you how to switch back to the L2 norm; it is easy.
+
+aseem@cs.washington.edu

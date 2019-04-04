@@ -1,0 +1,625 @@
+#include <fstream>
+using namespace std;
+
+#include "doppel2.h"
+#include "cvMaster.h"
+#include "cli.h"
+#include "dof.h"
+#include "skeleton.h"
+#include "charVec.h"
+#include "trimesh.h"
+#include "cvgf.h"
+#include "skinCalc.h"
+#include "surfaceDef.h"
+#include "solver.h"
+
+extern Skin scSkin;
+extern TriMesh *scMesh;
+
+CharVec charVec;
+
+//int numMatches, numChars;
+Skeleton *matchPoses;
+TriMesh *matchMeshes;
+//int *charMap;
+CVGoalFunction *cvGF = NULL;
+
+static LBFGSSolver *solver = NULL;
+LADeformationGoalFunction *matchGF = NULL;
+
+void cvInit(const char *params) {
+	cvGF = new CVGoalFunction();
+	cvGF->cv = &charVec;
+
+	charVec.vis = true;
+//	charVec.skel = Skeleton::load("data/body.sk.txt");
+	charVec.skel = Skeleton::load("data/james.sk.txt");
+
+//	charVec.createCylArm(40, 20, 0.05);
+	charVec.createCylArm(80, 40, 0.05);
+//	charVec.createCylArm(100, 50, 0.05);
+	charVec.updateTM();
+	charVec.vis = true;
+}
+
+void cvInitFromSkin(const char *params) {
+	int numComponents;
+	params = extractInt(params, &numComponents);
+
+	cvGF = new CVGoalFunction();
+	cvGF->cv = &charVec;
+
+	charVec.vis = true;
+	charVec.skel = scSkin.skel; //Skeleton::load("data/body.sk.txt");
+
+	charVec.tm = scMesh;
+	charVec.createFromSkin(scSkin, numComponents);
+//	charVec.updateTM();
+	charVec.vis = true;
+}
+
+/*
+void cvInitFromMesh(const char *params) {
+	char skelFName[256], meshFName[256];
+	params = extractString(params, skelFName, 256);
+	params = extractString(params, meshFName, 256);
+
+	cvGF = new CVGoalFunction();
+	cvGF->cv = &charVec;
+
+	charVec.vis = true;
+	charVec.skel = Skeleton::load(skelFName); //"data/body.sk.txt");
+
+	charVec.tm = new TriMesh();
+	charVec.tm->loadFile(meshFName);
+	charVec.createFromSkin(scSkin);
+//	charVec.updateTM();
+	charVec.vis = true;
+}*/
+
+void cvAutoUpdate(const char *params) {
+	params = extractBool(params, &charVec.update);
+}
+
+void cvBuildExampleSet(const char *params) {
+	char setName[80], temp[80];
+	params = extractString(params, setName, 80);
+	ifstream setIn, in;
+	int i;
+
+	if (!openIFStream(&setIn, setName, "example set"))
+		return;
+
+	setIn >> cvGF->numExamples >> cvGF->numChars;
+	matchPoses = new Skeleton[cvGF->numExamples];
+	matchMeshes = new TriMesh[cvGF->numExamples];
+	cvGF->examples = new CVExample[cvGF->numExamples];
+
+	for (i=0; i < cvGF->numExamples; i++) {
+		setIn >> cvGF->examples[i].charID;
+
+		matchPoses[i].copyFrom(charVec.skel);
+		setIn >> temp;
+		if (!openIFStream(&in, temp, "pose"))
+			return;
+		matchPoses[i].loadPose(in);
+		in.close();
+
+		setIn >> temp;
+		matchMeshes[i].loadPly(temp);
+		matchMeshes[i].calcNormals();
+		matchMeshes[i].showColor = false;
+		matchMeshes[i].solidColor = Vec3d(0.8, 0.8, 0.8);
+		matchMeshes[i].alpha = 0.8;
+
+		scSkin.skel->copyVals(&matchPoses[i]);
+		scSkin.skel->updateCoords();
+		scSkin.updateLocalFrames();
+		cvGF->examples[i].buildExample(&matchMeshes[i], &scSkin);
+
+		setIn >> temp;
+		cvGF->examples[i].save(temp);
+	}
+
+	cvGF->init(cvGF->numExamples, cvGF->numChars);
+
+	cvGF->cv->updateCurComponents(cvGF->examples[cvGF->numExamples-1].dofs);
+	cvGF->cv->updateLocalPos(NULL);
+	cvGF->cv->updateTM();
+}
+
+void cvLoadExampleSet(const char *params) {
+	char setName[80], temp[80];
+	params = extractString(params, setName, 80);
+	ifstream setIn, in;
+	int i;
+
+	if (!openIFStream(&setIn, setName, "example set"))
+		return;
+
+	setIn >> cvGF->numExamples >> cvGF->numChars;
+	matchPoses = new Skeleton[cvGF->numExamples];
+	cvGF->examples = new CVExample[cvGF->numExamples];
+
+	for (i=0; i < cvGF->numExamples; i++) {
+		setIn >> cvGF->examples[i].charID;
+
+		matchPoses[i].copyFrom(charVec.skel);
+		setIn >> temp;
+		if (!openIFStream(&in, temp, "pose"))
+			return;
+		matchPoses[i].loadPose(in);
+		in.close();
+
+		setIn >> temp;
+
+		setIn >> temp;
+		cvGF->examples[i].load(temp);
+	}
+
+	cvGF->init(cvGF->numExamples, cvGF->numChars);
+
+	cvGF->cv->updateCurComponents(cvGF->examples[cvGF->numExamples-1].dofs);
+	cvGF->cv->updateTM(cvGF->examples[i-1].trans);
+}
+
+//void cvInitSolve(const char *params) {
+
+//}
+
+void cvRunEM(const char *params) {
+	int numIterations = 5;
+	params = extractInt(params, &numIterations);
+
+	cvGF->runEM(numIterations);
+}
+
+void cvStopEM(const char *params) {
+	if (!cvGF) {
+		cout << "no goal function created" << endl;
+		return;
+	}
+	if (!cvGF->solver) {
+		cout << "solver not running" << endl;
+		return;
+	}
+
+	cvGF->solver->stopNow = true;
+}
+
+void cvElbowAnim(const char *params) {
+	char fname[80], str[80];
+	str[0] = 0;
+	params = extractString(params, str, 80);
+	if (str[0] == 0)
+		strcpy(str, "elbow");
+
+	double *elbowA = &(((SkelPolarAxisRotation*)charVec.skel->transforms.getT("lElbowA"))->curTheta);
+
+	int i;
+	for (i=0; i < 60; i++) {
+		if (i <= 30)
+			*elbowA = -i * 2.3 / 30.0;
+		else
+			*elbowA = -(60-i) * 2.3 / 30.0;
+
+		sprintf(fname, "anim/%s-%03d.tga", str, i);
+		redrawVNow();
+		uiScreenshot(fname);
+	}
+}
+
+void cvCalcRMS(const char *params) {
+	int ex, pt;
+	double err = 0;
+	int count = 0;
+/*
+	for (ex=0; ex < cvGF->numExamples; ex++) {
+		charVec.skel->copyVals(&cvGF->poses[ex]);
+		charVec.skel->updateCoords();
+		charVec.updateTM();
+
+		charVec.tm->calcHBB(100);
+
+		for (pt=0; pt < cvGF->meshes[ex].numPts(); pt++) {
+			double dist = 0;
+
+			charVec.tm->closestRestrictNormal = false;
+			if (!charVec.tm->calcClosestPoint(cvGF->meshes[ex].getPt(pt), 1.0)) {
+				cout << "warning: no closest point " << pt << endl;
+			}
+			else {
+				count++;
+				err += sqr(charVec.tm->closestDist);
+			}
+		}
+	}
+*/
+	cout << "RMS error = " << sqrt(err / count) << endl;
+}
+
+void cvSave(const char *params) {
+	char fname[80];
+	fname[0] = 0;
+	params = extractString(params, fname, 80);
+
+	ofstream out;
+	if (!openOFStream(&out, fname, "charVec")) {
+		return;
+	}
+/*	out << charVec.numPts << " " << NUM_P_VALUES << endl;
+	int i, j;
+	for (i=0; i < charVec.numPts; i++) {
+		for (j=0; j < NUM_P_VALUES; j++) {
+			out << charVec.cvPts[i].pValues[j] << " ";
+		}
+		out << endl;
+	}*/
+
+	out.close();
+}
+
+void cvLoad(const char *params) {
+	char fname[80];
+	fname[0] = 0;
+	params = extractString(params, fname, 80);
+
+	ifstream in;
+	if (!openIFStream(&in, fname, "charVec")) {
+		return;
+	}
+/*	int i, j;
+	in >> i >> j;
+	if (i != charVec.numPts) {
+		cout << "mismatched number of points: expected " << charVec.numPts << "; found " << i << endl;
+		in.close();
+		return;
+	}
+	if (j != NUM_P_VALUES) {
+		cout << "mismatched number of pValues: expected " << NUM_P_VALUES << "; found " << j << endl;
+		in.close();
+		return;
+	}
+	for (i=0; i < charVec.numPts; i++) {
+		for (j=0; j < NUM_P_VALUES; j++) {
+			in >> charVec.cvPts[i].pValues[j];
+		}
+	}
+*/
+	in.close();
+}
+
+void cvSaveSet(const char *params) {
+	char fname[80];
+	fname[0] = 0;
+	params = extractString(params, fname, 80);
+
+	FILE *f;
+	if (!openFile(&f, fname, "wb", "charvec set"))
+		return;
+
+	// version:
+	int i = 0;
+	fwrite(&i, sizeof(int), 1, f);
+	// # of points:
+	fwrite(&cvGF->cv->numPts, sizeof(int), 1, f);
+	// # of components:
+	fwrite(&cvGF->cv->numComponents, sizeof(int), 1, f);
+	// # of P values:
+//	i = NUM_P_VALUES;
+//	fwrite(&i, sizeof(int), 1, f);
+
+	// data:
+//	fwrite(cvGF->curVars.n, sizeof(double), cvGF->curVars.size(), f);
+
+	fclose(f);
+}
+
+void cvLoadSet(const char *params) {
+	char fname[80];
+	fname[0] = 0;
+	params = extractString(params, fname, 80);
+
+	// ...
+}
+
+void cvMakeMovie(const char *params) {
+	double lo, hi;
+	int numFrames;
+	params = extractInt(params, &numFrames);
+	params = extractDouble(params, &lo);
+	params = extractDouble(params, &hi);
+	char fName[80];
+
+	int i;
+	for (i=0; i < numFrames; i++) {
+		double comps[1];
+		comps[0] = lo + (hi-lo) * (1.0 * i / (numFrames-1));
+//		cvGF->constructCV(comps, 1);
+		charVec.updateTM();
+
+		redrawVNow();
+		sprintf(fName, "anim\\sc%04d.tga", i);
+		uiScreenshot(fName);
+	}
+}
+
+void cvSavePly(const char *params) {
+	char fname[80];
+	params = extractString(params, fname, 80);
+
+	charVec.tm->savePly(fname);
+}
+
+void cvLoadTexture(const char *param) {
+	char fname[80];
+	param = extractString(param, fname, 80);
+
+	FILE *f;
+	if (!openFile(&f, fname, "rb", "points"))
+		return;
+
+	char version;
+	fread(&version, sizeof(char), 1, f);
+
+	if (version == '0') {
+		int i;
+		fread(&i, sizeof(int), 1, f);
+
+		if (i != cvGF->cv->numPts * 3) {
+			cout << "point size mismatch; expected " << cvGF->cv->numPts*3 << "; read " << i << endl;
+		}
+		else {
+			for (i=0; i < cvGF->cv->numPts; i++) {
+				Vec3d *v = &(cvGF->cv->tm->getPtColor(i));
+				fread(v, sizeof(double), 3, f);
+			}
+		}
+		fclose(f);
+	}
+	else {
+		cout << "warning in cvLoadTexture: unsupported format" << endl;
+	}
+}
+
+void cvSetLocalFromTM(const char *params) {
+	int ex = 0;
+	params = extractInt(params, &ex);
+	charVec.setFromLocalTM(cvGF->examples[ex].iTrans);
+}
+
+void cvSaveLocal(const char *params) {
+	char fname[255];
+	params = extractString(params, fname, 255);
+
+	FILE *f;
+	if (!openFile(&f, fname, "wb", "local coordinate file"))
+		return;
+
+	fwrite(&charVec.numPts, sizeof(int), 1, f);
+	int i;
+	for (i=0; i < charVec.numPts; i++) {
+		fwrite(&(charVec.cvPts[i].localPos), sizeof(Vec3d), 1, f);
+	}
+
+	fclose(f);
+}
+
+void cvLoadLocal(const char *params) {
+	char fname[255];
+	params = extractString(params, fname, 255);
+
+	FILE *f;
+	if (!openFile(&f, fname, "rb", "local coordinate file"))
+		return;
+
+	int i;
+	fread(&i, sizeof(int), 1, f);
+	if (i != charVec.numPts) {
+		cout << "warning in cvLoadLocal: expected " << charVec.numPts << " points; found " << i << endl;
+		fclose(f);
+		return;
+	}
+	for (i=0; i < charVec.numPts; i++) {
+		fread(&(charVec.cvPts[i].localPos), sizeof(Vec3d), 1, f);
+	}
+
+	fclose(f);
+}
+
+void cvSaveExample(const char *params) {
+	int ex;
+	char fname[255];
+	params = extractInt(params, &ex);
+	params = extractString(params, fname, 255);
+
+	CVExample newEx = cvGF->examples[ex];
+	newEx.numPoints = charVec.numPts;
+	newEx.points = new Vec3d[newEx.numPoints];
+	newEx.conf = new double[newEx.numPoints];
+	int i;
+	for (i=0; i < newEx.numPoints; i++) {
+		newEx.points[i] = charVec.tm->getPt(i);
+		newEx.conf[i] = charVec.tm->getPtColor(i)[1];
+	}
+	newEx.save(fname);
+	delete []newEx.points;
+	delete []newEx.conf;
+}
+
+void cvInitSurfaceMatch(const char *params) {
+	int example = 0;
+	char markerName[255];
+
+	params = extractInt(params, &example);
+	params = extractString(params, markerName, 255);
+
+	// set global coordinates
+	cvGF->cv->updateTM(cvGF->examples[example].trans);
+
+	// load lock shape
+//	cvLoadTexture("data/lock-hi.disp");
+	int i;
+	for (i=0; i < cvGF->cv->numPts; i++) {
+		cvGF->cv->tm->getPtColor(i) = Vec3d(1, 1, 1);
+	}
+
+	// initialize goal function
+	if (!matchGF) {
+		matchGF = new LADeformationGoalFunction(cvGF->cv->tm, cvGF->cv->neighbors);	
+
+		// load marker refs
+		ifstream is;
+		int i, n;
+		if (!openIFStream(&is, "data/mrefs-10k.txt", "marker refs"))
+			return;
+		is >> n;
+		matchGF->markerRefs.resize(n);
+		for (i=0; i < n; i++) {
+			is >> matchGF->markerRefs[i];
+		}
+		is.close();
+		cout << "loaded " << n << " marker refs" << endl;
+	}
+	else {
+		int i;
+		for (i=0; i < cvGF->cv->tm->numPts(); i++) {
+			matchGF->origVerts[i] = cvGF->cv->tm->getPt(i);
+		}
+	}
+
+	// load markers
+	matchGF->markers = new MarkerSet;
+	matchGF->markers->loadFromMkr(markerName);
+	// swap head markers
+	Vec3d v = matchGF->markers->markers[5].pos;
+	matchGF->markers->markers[5].pos = matchGF->markers->markers[7].pos;
+	matchGF->markers->markers[7].pos = v;
+	v = matchGF->markers->markers[6].pos;
+	matchGF->markers->markers[6].pos = matchGF->markers->markers[8].pos;
+	matchGF->markers->markers[8].pos = v;
+
+	matchMeshes[example].calcNormals();
+	matchMeshes[example].calcHBB(16);
+	matchGF->prepareTriMesh(&(matchMeshes[example]));
+	matchGF->zeroDeformation();
+}
+
+void cvRunSurfaceMatch(const char *params) {
+	if (!matchGF) {
+		cout << "warning: goal function not initialized in cvRunSurfaceMatch" << endl;
+		return;
+	}
+	if (solver) {
+		cout << "warning: solver already running in cvRunSurfaceMatch" << endl;
+		return;
+	}
+
+	params = extractDouble(params, &(matchGF->surfaceMatchWeight));
+	params = extractDouble(params, &(matchGF->smoothnessWeight));
+	params = extractDouble(params, &(matchGF->markerMatchWeight));
+	int maxIter = 1000;
+	params = extractInt(params, &maxIter);
+
+	solver = new LBFGSSolver(matchGF);
+	solver->solve(1e+3, 1e-5, matchGF->vars, maxIter);
+
+	delete solver;
+	solver = NULL;
+}
+
+void cvStop(const char *params) {
+	if (solver)
+		solver->stopNow = true;
+}
+
+void cvAnimPoses(const char *params) {
+	vector<int> poses;
+	vector<int> frames;
+	int i, j, k;
+	char fname[256];
+	bool updateLocal = true;
+
+	params = extractBool(params, &updateLocal);
+	
+	while (1) {
+		i = -1;
+		params = extractInt(params, &i);
+		if (i < 0)
+			break;
+		poses.push_back(i);
+		i = -1;
+		params = extractInt(params, &i);
+		if (i < 0)
+			break;
+		frames.push_back(i);
+	}
+
+	// wipe color
+	for (i=0; i < charVec.tm->numPts(); i++)
+		charVec.tm->getPtColor(i) = Vec3d(0.8, 0.8, 0.8);
+
+	int frame = 0;
+	int numDofs = cvGF->examples[0].numDofs;
+	double *dofs = new double[numDofs];
+	for (i=0; i < frames.size(); i++) {
+		for (j=0; j < frames[i]; j++) {
+			double interp = 1.0 * j / (frames[i]);
+			
+			charVec.skel->interpVals(&matchPoses[poses[i]], &matchPoses[poses[i+1]], interp);
+			charVec.skel->updateCoords();
+			scSkin.skel->copyVals(charVec.skel);
+			scSkin.skel->updateCoords();
+			scSkin.updateLocalFrames();
+			charVec.dofsFromSkel(charVec.skel, dofs);
+			charVec.updateCurComponents(dofs);
+			if (updateLocal)
+				cvGF->cv->updateLocalPos(NULL);
+			cvGF->cv->updateTM();
+			redrawVNow();
+
+			sprintf(fname, "anim/frame%04d.tga", frame);
+			uiScreenshot(fname);
+			frame++;
+		}
+	}
+	delete []dofs;
+}
+
+void cvThing(const char *params) {
+/*	char fname[80];
+	params = extractString(params, fname, 80);
+
+	skelUI->savePose(fname);
+	*/
+}
+
+void initCVMaster() {
+	registerFunction(cvInit, "cvInit");
+	registerFunction(cvInitFromSkin, "cvInitFromSkin");
+	registerFunction(cvAutoUpdate, "cvAutoUpdate");
+	registerFunction(cvLoadExampleSet, "cvLoadExampleSet");
+	registerFunction(cvBuildExampleSet, "cvBuildExampleSet");
+	registerFunction(cvRunEM, "cvRunEM");
+	registerFunction(cvStopEM, "cvStopEM");
+	registerFunction(cvElbowAnim, "cvElbowAnim");
+	registerFunction(cvCalcRMS, "cvCalcRMS");
+	registerFunction(cvSave, "cvSave");
+	registerFunction(cvLoad, "cvLoad");
+	registerFunction(cvSaveSet, "cvSaveSet");
+	registerFunction(cvLoadSet, "cvLoadSet");
+	registerFunction(cvMakeMovie, "cvMakeMovie");
+	registerFunction(cvSavePly, "cvSavePly");
+
+	registerFunction(cvLoadTexture, "cvLoadTexture");
+	registerFunction(cvSetLocalFromTM, "cvSetLocalFromTM");
+	registerFunction(cvSaveLocal, "cvSaveLocal");
+	registerFunction(cvLoadLocal, "cvLoadLocal");
+	registerFunction(cvSaveExample, "cvSaveExample");
+
+	registerFunction(cvInitSurfaceMatch, "cvInitSurfaceMatch");
+	registerFunction(cvRunSurfaceMatch, "cvRunSurfaceMatch");
+	registerFunction(cvStop, "cvStop");
+
+	registerFunction(cvAnimPoses, "cvAnimPoses");
+}

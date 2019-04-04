@@ -1,0 +1,40 @@
+baseT 0 0 0
+baseQ 0 0 0 1
+waistQ 0 0 0 1
+abdomenT 0 0.17
+abdomenQ 0 0 0 1
+leftT -0.02 -0.03 0.25
+lClavicleZR 0
+lClavicleXR 0
+lClavicleT 0 -0.16 0
+lShoulderXR 1.2
+lShoulderZR 0
+lShoulderYR -1.79
+lUpperArmT -0.3
+lCarryingA 0
+lElbowA 0
+lForearmT -0.24
+lForearmA 0
+lWristA 0
+rClavicleZR 0
+rClavicleXR 0
+rShoulderXR -1.12
+rShoulderZR 0
+rShoulderYR -1.66
+rCarryingA 0
+rElbowA 0
+rForearmA 0
+rWristA 0
+lPelvisT -0.04 -0.11 -0.12
+lHipQ 0 0 0 1
+lThighT -0.46
+lKneeCarryingA 0
+lKneeA 0
+lShinT -0.44
+lAnkleA 0 0 0 1
+rHipQ 0 0 0 1
+rKneeCarryingA 0
+rKneeA 0
+rAnkleA 0 0 0 1
+chestT -0.05 0.33
+neckR 0 0 0 1

@@ -1,0 +1,1553 @@
+#include "doppel2.h"
+#include "uSolver.h"
+#include "uSkin.h"
+#include "uMaster.h"
+#include "skeleton.h"
+#include "knnQuat.h"
+#include "trimesh.h"
+#include "edgelist.h"
+#include "vl/VLd.h"
+
+extern int visSkel;
+
+const bool USE_PDD_DOFS = true;
+const double NORMAL_TOL = cos(20 * DEG_TO_RAD);
+
+#define ICM
+
+// UExample ===============================================
+
+UExample::UExample() {
+	character = 0;
+	numPts = 0;
+	ptsConf = NULL;
+	pts = NULL;
+	mesh = NULL;
+	edgeList = NULL;
+	vertList = NULL;
+	isDress = false;
+	lookup = NULL;
+}
+
+void UExample::init(int iNumPts) {
+	numPts = iNumPts;
+	ptsConf = new double[numPts];
+	memset(ptsConf, 0, sizeof(double)*numPts);
+	pts = new Vec3d[numPts];
+}
+
+void UExample::init(const char *meshName) {
+	mesh = new TriMesh;
+	mesh->loadFile(fname);
+	mesh->calcHBB(16);
+	mesh->calcNormals();
+	int i;
+	for (i=0; i < mesh->numPts(); i++)
+		mesh->getPtColor(i) = Vec3d(0.8, 0.8, 0.8);
+	
+	edgeList = new EdgeList();
+	edgeList->buildFromTriMesh(*mesh);
+	vertList = new char[edgeList->numVerts];
+	edgeList->markVerts(vertList);
+}
+
+void UExample::initLookup(int *lu) {
+	lookup = lu;
+}
+
+bool UExample::getPt(int ind, Vec3d *v, double *conf) {
+	if (lookup) {
+		if (lookup[ind] < 0) {
+			if (conf) *conf = 0;
+			return false;
+		}
+		*v = pts[lookup[ind]];
+		if (conf) {
+			if (ptsConf)
+				*conf = ptsConf[lookup[ind]];
+			else
+				*conf = 1;
+		}
+		return true;
+	}
+	else {
+		*v = pts[ind];
+		if (conf) {
+			if (ptsConf)
+				*conf = ptsConf[ind];
+			else
+				*conf = 1;
+		}
+		return true;
+	}
+}
+
+
+// UDataSet ===============================================
+
+UDataSet::UDataSet() {
+	numExamples = 0;
+	numCharacters = 0;
+	examples = NULL;
+	charIndex = NULL;
+	charMu = NULL;
+	charPhi = NULL;
+}
+
+void UDataSet::init(int iNumExamples, int iNumCharacters) {
+	numExamples = iNumExamples;
+	examples = new UExample[numExamples];
+
+	numCharacters = iNumCharacters;
+	charIndex = new int[numCharacters];
+	memset(charIndex, 0, sizeof(int) * numCharacters);
+	charMu = new VLVecd[numCharacters];
+	charPhi = new VLMatd[numCharacters];
+}
+
+void UDataSet::initLookup(vector<int> &mrefs) {
+	int n = examples[0].numPts;
+	int *lu = new int[n];
+	int i;
+	for (i=0; i < n; i++)
+		lu[i] = -1;
+	for (i=0; i < mrefs.size(); i++) {
+		if (mrefs[i] >= 0)
+			lu[mrefs[i]] = i;
+	}
+	int ex;
+	for (ex = 0; ex < numExamples; ex++) {
+		examples[ex].initLookup(lu);
+	}
+}
+
+
+// USolver ================================================
+
+USolver::USolver() {
+	dataSet = NULL;
+	skin = NULL;
+	lastErr = 0;
+	lockIntrinsic = false;
+	lockExtrinsic = false;
+	wOnly = false;
+
+	dressDofPos = -1;
+	intDofPos = -1;
+	lamdaDofPos = -1;
+	poseDofPos = -1;
+	weightDofPos = -1;
+	pddDofPos = -1;
+
+	sigma = 0.05;
+	lamdaWeight = 20.0;
+	pddMask = NULL;
+}
+
+void USolver::init(UDataSet *iDataSet, USkin *iSkin, TriMesh *iMesh, int iNumComponents) {
+	int i, j, index, ch;
+
+	dataSet = iDataSet;
+	skin = iSkin;
+	uMesh = iMesh;
+	numComponents = iNumComponents;
+
+//	skin->numPts = 1;
+
+	for (ch=0; ch < dataSet->numCharacters; ch++) {
+		dataSet->charMu[ch].SetSize(numComponents);
+		dataSet->charPhi[ch].SetSize(numComponents, numComponents);
+	}
+
+	numVars = 0;
+	dressDofPos = numVars;
+	numVars += skin->numPts * 3 * numComponents;
+	lamdaDofPos = numVars;
+	numVars += skin->skel->numIntrinsicDofs * numComponents;
+	intDofPos = numVars;
+	numVars += skin->skel->numIntrinsicDofs * dataSet->numCharacters;
+	poseDofPos = numVars;
+	numVars += skin->skel->numPoseDofs * dataSet->numExamples;
+	weightDofPos = numVars;
+	numVars += skin->numPts * (skin->maxInf-1);
+	if (USE_PDD_DOFS) {
+		pddDofPos = numVars;
+		numVars += skin->ptPddOfs[skin->numPts * skin->maxInf] * 3 * numComponents;
+	}
+	else {
+		pddDofPos = -1;
+	}
+
+	vars.resize(numVars, true);
+	grad.resize(numVars);
+	dumpDofPos();
+
+	index = 0;
+	// initialize dress pose vars
+	for (i=0; i < skin->numPts; i++) {
+		dataSet->examples[0].getPt(i, &skin->dressPts[i]);
+	}
+
+	// initialize skeleton vars
+	for (ch = 0; ch < dataSet->numCharacters; ch++) {
+		skin->transInit(&dataSet->examples[dataSet->charIndex[ch]]);
+		int ip = intDofPos + skin->skel->numIntrinsicDofs * ch;
+		int pp = poseDofPos;
+		for (i=0; i < skin->skel->transforms.size(); i++) {
+			SkelTransform *curTrans = skin->skel->transforms.getT(i);
+			if (curTrans->isIntrinsic) {
+				curTrans->unloadDofs(vars.n + ip);
+				ip += curTrans->numDofs();
+			}
+			else {
+				j = dataSet->charIndex[ch];
+				while (j < dataSet->numExamples && dataSet->examples[j].character == ch) {
+					curTrans->unloadDofs(vars.n + pp + skin->skel->numPoseDofs * j);
+					j++;
+				}
+				pp += curTrans->numDofs();
+			}
+		}
+	}
+
+	weightsToVars();
+
+/*	if (pddDofPos >= 0) {
+		for (i=pddDofPos; i < numVars; i++)
+			vars[i] = boundedRand(-0.001, 0.001);
+	}*/
+
+	skin->skel->allocDerivs(skin->skel->numDofs);
+}
+
+void USolver::buildNeighborTable(TriMesh *tm) {
+	int pt, i, j;
+	int *infMap = new int[skin->skel->transforms.size()];
+	int *infInd0 = new int[skin->skel->transforms.size()];
+	int *infInd1 = new int[skin->skel->transforms.size()];
+	NeighborRelation nr;
+	int numReg = 0, numZero = 0;
+
+	// build a list of neighbor relationship (count each pair only once)
+	neighbors = new vector<int>[tm->numPts()];
+	for (i=0; i < tm->numTris(); i++) {
+		int v0 = tm->getTri(i, 0);
+		int v1 = tm->getTri(i, 1);
+		int v2 = tm->getTri(i, 2);
+		if (v0 < v1)
+			neighbors[v0].push_back(v1);
+		if (v1 < v2)
+			neighbors[v1].push_back(v2);
+		if (v2 < v0)
+			neighbors[v2].push_back(v0);
+	}
+
+	// build a list of neighbor/influence relations
+	for (pt=0; pt < tm->numPts(); pt++) {
+		for (i=0; i < neighbors[pt].size(); i++) {
+			int pt2 = neighbors[pt][i];
+			memset(infMap, 0, sizeof(int)*skin->skel->transforms.size());
+			for (j=0; j < skin->maxInf; j++) {
+				if (skin->infJoints[pt*skin->maxInf + j] > -1) {
+					infMap[skin->infJoints[pt*skin->maxInf + j]] += 1;
+					infInd0[skin->infJoints[pt*skin->maxInf + j]] = j;
+				}
+				if (skin->infJoints[pt2*skin->maxInf + j] > -1) {
+					infMap[skin->infJoints[pt2*skin->maxInf + j]] += 2;
+					infInd1[skin->infJoints[pt2*skin->maxInf + j]] = j;
+				}
+			}
+
+			for (j=0; j < skin->skel->transforms.size(); j++) {
+				if (infMap[j] == 1) {
+					nr.set(pt, infInd0[j]);
+					neighTable.push_back(nr);
+					numZero++;
+				}
+				else if (infMap[j] == 2) {
+					nr.set(pt2, infInd1[j]);
+					neighTable.push_back(nr);
+					numZero++;
+				}
+				else if (infMap[j] == 3) {
+					nr.set(pt, infInd0[j], pt2, infInd1[j]);
+					neighTable.push_back(nr);
+					numReg++;
+				}
+			}
+		}
+	}
+
+	cout << "found " << numReg << " neighbor pairs, and " << numZero << " zero assignments" << endl;
+
+	delete []infMap;
+	delete []infInd0;
+	delete []infInd1;
+}
+
+void USolver::dumpDofPos() {
+	cout << "dress: " << dressDofPos << ", lamda: " << lamdaDofPos << 
+		", intrinsics: " << intDofPos << ", pose: " << poseDofPos << 
+		", weights: " << weightDofPos << ", PDDs: " << pddDofPos << 
+		", total: " << vars.size() << endl;
+}
+
+void USolver::save(FILE *f) {
+	fwrite(vars.n, sizeof(double), vars.size(), f);
+}
+
+void USolver::load(FILE *f) {
+	fread(vars.n, sizeof(double), vars.size(), f);
+	int i;
+	for (i=0; i < vars.size(); i++) {
+		if (!_finite(vars[i])) {
+			cout << "warning: var " << i << " is not finite" << endl;
+			vars[i] = 0;
+		}
+	}
+}
+
+void USolver::skelToVars(int ex) {
+	int i;
+	int ip = intDofPos + skin->skel->numIntrinsicDofs * dataSet->examples[ex].character;
+	int pp = poseDofPos + skin->skel->numPoseDofs * ex;
+	for (i=0; i < skin->skel->transforms.size(); i++) {
+		SkelTransform *curTrans = skin->skel->transforms.getT(i);
+		if (curTrans->isIntrinsic) {
+			curTrans->unloadDofs(vars.n + ip);
+			ip += curTrans->numDofs();
+		}
+		else {
+			curTrans->unloadDofs(vars.n + pp);
+			pp += curTrans->numDofs();
+		}
+	}
+}
+
+void USolver::weightsToVars() {
+	int i, j;
+	int wp = weightDofPos;
+
+	if (pddDofPos > 0) {
+		int totalPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3 * numComponents;
+		// make sure that we have the right number of variables allocated
+		if (numVars != pddDofPos + totalPddVars) {
+			numVars = pddDofPos + totalPddVars;
+			vars.resize(numVars);
+			grad.resize(numVars);
+			memset(vars.n + pddDofPos, 0, sizeof(double) * totalPddVars);
+			dumpDofPos();
+		}
+	}
+
+	for (i=0; i < skin->numPts; i++) {
+		for (j=1; j < skin->maxInf; j++)
+			vars[wp++] = skin->infWeights[i*skin->maxInf + j];
+	}
+}
+
+void USolver::updateSkel(double *comps, int numComps, bool dress) {
+	int i, j;
+
+	static double *recon = NULL;
+	if (!recon)
+		recon = new double[skin->skel->numIntrinsicDofs];
+	memset(recon, 0, sizeof(double) * skin->skel->numIntrinsicDofs);
+
+	for (i=0; i < min(numComps, numComponents); i++) {
+		for (j=0; j < skin->skel->numIntrinsicDofs; j++) {
+			recon[j] += comps[i] * vars[lamdaDofPos + i * skin->skel->numIntrinsicDofs + j];
+		}
+	}
+
+	int ip = 0;
+	for (i=0; i < skin->skel->transforms.size(); i++) {
+		SkelTransform *curTrans = skin->skel->transforms.getT(i);
+		if (curTrans->isIntrinsic) {
+			curTrans->loadDofs(recon + ip);
+			ip += curTrans->numDofs();
+		}
+		else if (dress) {
+			curTrans->zero();
+		}
+	}
+	skin->skel->updateCoords();
+}
+
+void USolver::updateSkel(int ex, bool reconstruct, bool isDress) {
+	int i, j;
+
+	if (reconstruct) {
+		static double *recon = NULL;
+		if (!recon)
+			recon = new double[skin->skel->numIntrinsicDofs];
+		memset(recon, 0, sizeof(double) * skin->skel->numIntrinsicDofs);
+
+		int ch = dataSet->examples[ex].character;
+		for (i=0; i < numComponents; i++) {
+			for (j=0; j < skin->skel->numIntrinsicDofs; j++) {
+				recon[j] += dataSet->charMu[ch][i] * vars[lamdaDofPos + i * skin->skel->numIntrinsicDofs + j];
+			}
+		}
+
+		int ip = 0;
+		int pp = poseDofPos + skin->skel->numPoseDofs * ex;
+		for (i=0; i < skin->skel->transforms.size(); i++) {
+			SkelTransform *curTrans = skin->skel->transforms.getT(i);
+			if (curTrans->isIntrinsic) {
+				curTrans->loadDofs(recon + ip);
+				ip += curTrans->numDofs();
+			}
+			else if (!isDress) {
+				curTrans->loadDofs(vars.n + pp);
+				pp += curTrans->numDofs();
+			}
+			else
+				curTrans->zero();
+		}
+	}
+	else {
+		int ip = intDofPos + skin->skel->numIntrinsicDofs * dataSet->examples[ex].character;
+		int pp = poseDofPos + skin->skel->numPoseDofs * ex;
+		for (i=0; i < skin->skel->transforms.size(); i++) {
+			SkelTransform *curTrans = skin->skel->transforms.getT(i);
+			if (curTrans->isIntrinsic) {
+				curTrans->loadDofs(vars.n + ip);
+				ip += curTrans->numDofs();
+			}
+			else if (!isDress) {
+				curTrans->loadDofs(vars.n + pp);
+				pp += curTrans->numDofs();
+			}
+			else
+				curTrans->zero();
+		}
+	}
+	skin->skel->updateCoords();
+}
+
+void USolver::updateWeights() {
+	int i, j, comp;
+	double sum;
+
+//	memcpy(skin->dressPts, vars.n, sizeof(Vec3d) * skin->numPts);
+
+	int wp = weightDofPos;
+	for (i=0; i < skin->numPts; i++) {
+		sum = 0;
+		for (j=1; j < skin->maxInf; j++) {
+			if (skin->infJoints[i*skin->maxInf + j] >= 0) {
+				sum += vars[wp];
+				skin->infWeights[i*skin->maxInf + j] = vars[wp];
+			}
+			wp++;
+		}
+		skin->infWeights[i*skin->maxInf] = 1.0 - sum;
+	}
+}
+
+void USolver::updatePoints(int ch) {
+	updatePoints(dataSet->charMu[ch].Ref(), numComponents);
+}
+
+void USolver::updatePoints(double *comps, int numComps) {
+	int comp, pt, var;
+
+	numComps = min(numComps, numComponents);
+
+	// reconstruct dress points
+	memset(skin->dressPts, 0, sizeof(Vec3d) * skin->numPts);
+	for (comp = 0; comp < numComps; comp++) {
+		double w = comps[comp];
+		if (w != 0) {
+			for (pt=0; pt < skin->numPts; pt++) {
+				skin->dressPts[pt] += w * varDressPt(pt, comp);
+			}
+		}
+	}
+
+	// reconstruct PDDs
+	if (pddDofPos >= 0) {
+		int numPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+		if (numPddVars > 0) {
+			memset(skin->pddKeys, 0, sizeof(double) * numPddVars);
+
+			for (comp = 0; comp < numComps; comp++) {
+				double w = comps[comp];
+				if (w != 0) {
+					for (var = 0; var < numPddVars; var++) {
+						skin->pddKeys[var/3][var%3] += w * vars[pddDofPos + comp * numPddVars + var];
+					}
+				}
+			}
+		}
+	}
+}
+
+void USolver::rayPoint(Vec3d pt, Vec3d norm, UExample *ex, double &curDistance, Vec3d &curClosestPt, double &curSurfaceWeight) {
+	curClosestPt = Vec3d();
+	curDistance = 0;
+	curSurfaceWeight = 0;
+
+	ex->mesh->closestRestrictNormal = true;
+	ex->mesh->closestNormalRestriction = norm;
+
+	if (ex->mesh->calcClosestPoint(pt, 1.10)) {
+		curClosestPt = ex->mesh->closestPt;
+
+		Vec3d delta = ex->mesh->closestPt - pt;
+		delta.normalize();
+
+		// if closest point is a vertex, check if we need to flip the sign
+		if (ex->mesh->closestTri[1] == -1) {
+			curSurfaceWeight = ex->mesh->getPtConf(ex->mesh->closestTri[0]);
+
+			double dotProd = delta * ex->mesh->getPtNormal(ex->mesh->closestTri[0]);
+			if (dotProd < 0)
+				ex->mesh->closestDist *= -1;
+
+			// check if this vertex adjoins a hole
+			if (ex->vertList[ex->mesh->closestTri[0]]) {
+				curSurfaceWeight = 0;
+				return;
+			}
+
+			// check normal match
+			if (ex->mesh->closestNormalRestriction * ex->mesh->getPtNormal(ex->mesh->closestTri[0]) < NORMAL_TOL) {
+				curSurfaceWeight = 0;
+				return;
+			}
+		}
+		// if closest point is an edge, check if we need to flip the sign
+		else if (ex->mesh->closestTri[2] == - 1) {
+			curSurfaceWeight = ex->mesh->closestBary[0] * ex->mesh->getPtConf(ex->mesh->closestTri[0]) + ex->mesh->closestBary[1] * ex->mesh->getPtConf(ex->mesh->closestTri[1]);
+
+			EdgeInfo *ei = ex->edgeList->findEdge(ex->mesh->closestTri[0], ex->mesh->closestTri[1]);
+			if (!ei) {
+				cout << "error: unknown edge!!" << endl;
+				return;
+			}
+			double dotProd = delta * ei->normal;
+			if (dotProd < 0)
+				ex->mesh->closestDist *= -1;
+
+			// check if this edge adjoins a hole
+			if (ei->count == 1) {
+				curSurfaceWeight = 0;
+				return;
+			}
+
+			// check normal match
+			if (ex->mesh->closestNormalRestriction * ei->normal < NORMAL_TOL) {
+				curSurfaceWeight = 0;
+				return;
+			}
+		}
+		else {
+			curSurfaceWeight = 
+				ex->mesh->closestBary[0] * ex->mesh->getPtConf(ex->mesh->closestTri[0]) + 
+				ex->mesh->closestBary[1] * ex->mesh->getPtConf(ex->mesh->closestTri[1]) + 
+				ex->mesh->closestBary[2] * ex->mesh->getPtConf(ex->mesh->closestTri[2]);
+
+			Vec3d verts[3];
+			verts[0] = ex->mesh->getPt(ex->mesh->closestTri[0]);
+			verts[1] = ex->mesh->getPt(ex->mesh->closestTri[1]);
+			verts[2] = ex->mesh->getPt(ex->mesh->closestTri[2]);
+			Vec3d norm = -(verts[1] - verts[0]) ^ (verts[2] - verts[0]);
+			norm.normalize();
+
+			// check normal match
+			if (ex->mesh->closestNormalRestriction * norm < NORMAL_TOL) {
+				curSurfaceWeight = 0;
+				return;
+			}
+		}
+
+		curDistance = ex->mesh->closestDist;
+	}
+}
+
+double USolver::evaluateFunctionExp() {
+	int ex, pt, tr, ni, inf, samp, ch, dof;
+	int comp;
+	double ret = 0;
+
+	updateWeights();
+
+	// point-distance terms
+	for (ex=0; ex < dataSet->numExamples; ex++) {
+		updateSkel(ex, false, dataSet->examples[ex].isDress);
+		updatePoints(dataSet->examples[ex].character);
+		skin->skel->updateDerivs();
+		skin->skel->updateGlobalDerivs();
+		skin->updateMats();
+		if (dataSet->examples[ex].isDress) {
+			skin->updateJoints();
+		}
+		skin->updatePts();
+
+		for (pt = 0; pt < skin->numPts; pt++) {
+			// don't go past the number of points in this set
+			if (pt > dataSet->examples[ex].numPts)
+				break;
+
+			Vec3d exPt;
+			double curConf;
+			if (dataSet->examples[ex].getPt(pt, &exPt, &curConf) && curConf > 0) {
+				ret += skin->calcGradExp(pt, exPt, 
+					NULL, NULL, NULL, NULL, NULL, 
+					dataSet->examples[ex].isDress, 
+					dataSet->charPhi[dataSet->examples[ex].character], this);
+			}
+		}
+	}
+
+	return ret;
+}
+
+double USolver::evaluateFunction(Vecd& variables) {
+	int ex, pt, tr, ni, inf, samp, ch, dof;
+	int comp, comp2;
+	double ret = 0;
+
+#ifdef ICM
+	Vec3d dressGrad;
+	static int oldNumPddVars = -1;
+	static double *pddGrad = NULL;
+	int numPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+	if (oldNumPddVars != numPddVars) {
+		if (pddGrad) delete []pddGrad;
+		pddGrad = new double[numPddVars];
+		oldNumPddVars = numPddVars;
+	}
+#endif
+
+	if (&variables != &vars)
+		vars = variables;
+	grad.zeroElements();
+
+	updateWeights();
+
+	// point-distance terms
+	for (ex=0; ex < dataSet->numExamples; ex++) {
+#ifdef ICM
+		memset(pddGrad, 0, sizeof(double)*numPddVars);
+#endif
+
+		updateSkel(ex, false, dataSet->examples[ex].isDress);
+		updatePoints(dataSet->examples[ex].character);
+		skin->skel->updateDerivs();
+		skin->skel->updateGlobalDerivs();
+		skin->updateMats();
+		if (dataSet->examples[ex].isDress) {
+			skin->updateJoints();
+		}
+		skin->updatePts();
+
+		if (dataSet->examples[ex].mesh && uMesh) {
+			cout << "warning: mesh-based matching is no longer supported" << endl;
+			//for (pt=0; pt < uMesh->numPts(); pt++) {
+			//	uMesh->getPt(pt) = skin->curPts[pt];
+			//}
+			//uMesh->calcNormals();
+
+			//for (pt = 0; pt < skin->numPts; pt++) {
+			//	double curDistance, mult;
+			//	Vec3d curClosestPt;
+			//	rayPoint(skin->curPts[pt], uMesh->getPtNormal(pt), &dataSet->examples[ex], 
+			//		curDistance, curClosestPt, mult);
+
+			//	if (mult == 0)
+			//		continue;
+
+			//	Vec3d delta = skin->curPts[pt] - curClosestPt;
+			//	ret += mult * delta.length2();
+			//	if (pddDofPos >= 0)
+			//		skin->calcGrad(pt, 2.0 * mult * delta, 
+			//			grad.n + dressDofPose, grad.n + intDofPos, 
+			//			grad.n + poseDofPos + dataSet->charIndex[dataSet->examples[ex].character] * skin->numPoseDofs,
+			//			grad.n + poseDofPos + dataSet->examples[ex].character * skin->numPoseDofs, 
+			//			grad.n + weightDofPos, 
+			//			grad.n + pddDofPos, dataSet->examples[ex].isDress);
+			//	else
+			//		skin->calcGrad(pt, 2.0 * mult * delta, 
+			//			grad.n + dressDofPose, grad.n + intDofPos, 
+			//			grad.n + poseDofPos + dataSet->charIndex[dataSet->examples[ex].character] * skin->numPoseDofs,
+			//			grad.n + poseDofPos + dataSet->examples[ex].character * skin->numPoseDofs, 
+			//			grad.n + weightDofPos, 
+			//			NULL, dataSet->examples[ex].isDress);
+			//}
+		}
+		else {
+			for (pt = 0; pt < skin->numPts; pt++) {
+				// don't go past the number of points in this set
+				if (pt > dataSet->examples[ex].numPts)
+					break;
+
+				double mult;
+				Vec3d exPt;
+				dataSet->examples[ex].getPt(pt, &exPt, &mult);
+
+				if (mult > 0) {
+#ifdef ICM
+					//mult = 1;	// uniform confidence
+					Vec3d delta = skin->curPts[pt] - exPt;
+					ret += mult * delta.length2();
+
+					if (!_finite(ret)) {
+						cout << "bad values for pt " << pt << " ex " << ex << endl;
+//						exit(0);
+					}
+
+					dressGrad.zeroElements();
+					skin->calcGrad(pt, 2.0 * mult * delta, 
+						dressGrad.n, 
+						grad.n + intDofPos + dataSet->examples[ex].character * skin->skel->numIntrinsicDofs, 
+						grad.n + poseDofPos + ex * skin->skel->numPoseDofs, 
+						grad.n + weightDofPos + pt*(skin->maxInf-1), 
+						(pddDofPos >= 0) ? pddGrad : NULL, 
+						dataSet->examples[ex].isDress);
+
+					for (comp = 0; comp < numComponents; comp++) {
+						double w = dataSet->charMu[dataSet->examples[ex].character][comp];
+						if (w != 0) {
+							int ofs = dressDofPos + (comp * skin->numPts + pt) * 3;
+							grad.n[ofs + 0] += w * dressGrad[0];
+							grad.n[ofs + 1] += w * dressGrad[1];
+							grad.n[ofs + 2] += w * dressGrad[2];
+						}
+					}
+#else
+					ret += skin->calcGradExp(pt, exPt, 
+						grad.n + dressDofPos, 
+						grad.n + intDofPos + dataSet->examples[ex].character * skin->skel->numIntrinsicDofs, 
+						grad.n + poseDofPos + ex * skin->skel->numPoseDofs, 
+						grad.n + weightDofPos + pt*(skin->maxInf-1), 
+						(pddDofPos >= 0)? grad.n + pddDofPos : NULL, 
+						dataSet->examples[ex].isDress, 
+						dataSet->charPhi[dataSet->examples[ex].character], this);
+#endif
+				}
+			}
+		}
+
+#ifdef ICM
+		// distribute PDD gradient over components
+		for (comp = 0; comp < numComponents; comp++) {
+			double w = dataSet->charMu[dataSet->examples[ex].character][comp];
+			if (w != 0) {
+				int ofs = pddDofPos + comp * numPddVars;
+				int var;
+				for (var = 0; var < numPddVars; var++)
+					grad[ofs + var] += w * pddGrad[var];
+			}
+		}
+#endif
+	}
+
+	// regularization (ni = neighbor index)
+	for (ni = 0; ni < neighTable.size(); ni++) {
+		double delta;
+		NeighborRelation &nr = neighTable[ni];
+
+		double neighWeight = 10.0;
+
+		// weights
+		delta = skin->infWeights[nr.v0*skin->maxInf + nr.ind0];
+		if (nr.v1 > -1) {
+			delta -= skin->infWeights[nr.v1*skin->maxInf + nr.ind1];
+		}
+		ret += neighWeight * sqr(delta);
+		if (!_finite(ret)) {
+			cout << "bad values for gradient regularization " << nr.v0 << ", " << nr.v1 << endl;
+			exit(0);
+		}
+		// update the gradients (note that index zero must be treated specially,
+		// since it's 1 - the sum of the others)
+		if (nr.ind0 == 0) {
+			for (inf=0; inf < skin->maxInf-1; inf++) {
+				if (skin->infJoints[nr.v0*skin->maxInf + inf + 1] >= 0)
+					grad[weightDofPos + nr.v0*(skin->maxInf-1) + inf] -= 2.0 * neighWeight * delta;
+			}
+		}
+		else {
+			grad[weightDofPos + nr.v0*(skin->maxInf-1) + nr.ind0-1] += 2.0 * neighWeight * delta;
+		}
+		if (nr.v1 > -1) {
+			if (nr.ind1 == 0) {
+				for (inf=0; inf < skin->maxInf-1; inf++) {
+					if (skin->infJoints[nr.v1*skin->maxInf + inf + 1] >= 0)
+						grad[weightDofPos + nr.v1*(skin->maxInf-1) + inf] += 2.0 * neighWeight * delta;
+				}
+			}
+			else {
+				grad[weightDofPos + nr.v1*(skin->maxInf-1) + nr.ind1-1] -= 2.0 * neighWeight * delta;
+			}
+		}
+
+		// PDDs
+		if (pddDofPos != -1) {
+			int numPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+			neighWeight = 2.0; //0.4;
+
+			int ofs, ofs2 = 0; 
+			ofs = pddDofPos + skin->ptPddOfs[nr.v0 * skin->maxInf + nr.ind0]*3;
+			if (nr.v1 > -1) {
+				ofs2 = pddDofPos + skin->ptPddOfs[nr.v1 * skin->maxInf + nr.ind1]*3;
+			}
+			int numSamp = skin->ptPddOfs[nr.v0 * skin->maxInf + nr.ind0 + 1] - skin->ptPddOfs[nr.v0 * skin->maxInf + nr.ind0];
+			for (samp = 0; samp < numSamp * 3; samp++) {
+				for (comp = 0; comp < numComponents; comp++) {
+					delta = vars[ofs + comp*numPddVars];
+					if (nr.v1 > -1) {
+						delta -= vars[ofs2 + comp*numPddVars];
+					}
+					ret += neighWeight * sqr(delta);
+					if (!_finite(ret)) {
+						cout << "bad values for gradient regularization " << nr.v0 << ", " << nr.v1 << endl;
+						exit(0);
+					}
+					grad[ofs + comp*numPddVars] += 2.0 * neighWeight * delta;
+					if (nr.v1 > -1) {
+						grad[ofs2 + comp*numPddVars] -= 2.0 * neighWeight * delta;
+					}
+				}
+				ofs++;
+				ofs2++;
+			}
+		}
+	}
+	if (uMesh) {
+		for (pt=0; pt < uMesh->numPts(); pt++) {
+			// dressPose regularization
+			double dressNeighWeight;
+			for (ni=0; ni < neighbors[pt].size(); ni++) {
+				for (comp = 0; comp < numComponents; comp++) {
+					if (comp == 0)
+						dressNeighWeight = 0.0001;
+					else
+						dressNeighWeight = 0.1;
+					int ofs0 = dressDofPos + (comp * skin->numPts + pt) * 3;
+					int ofs1 = dressDofPos + (comp * skin->numPts + neighbors[pt][ni]) * 3;
+					double delta;
+					int i;
+					for (i=0; i < 3; i++) {
+						delta = vars[ofs0+i] - vars[ofs1+i];
+						ret += dressNeighWeight + sqr(delta);
+						grad[ofs0+i] += 2.0 * delta;
+						grad[ofs1+i] += 2.0 * delta;
+					}
+				}
+			}
+		}
+	}
+
+#ifdef ICM
+	// lamda reconstruction
+	for (ch = 0; ch < dataSet->numCharacters; ch++) {
+		double recon;
+
+		for (dof=0; dof < skin->skel->numIntrinsicDofs; dof++) {
+			recon = 0;
+			for (comp = 0; comp < numComponents; comp++) {
+				recon += dataSet->charMu[ch][comp] * vars[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof];
+			}
+
+			int ofs = intDofPos + skin->skel->numIntrinsicDofs * ch + dof;
+			double delta = recon - vars[ofs];
+			ret += lamdaWeight * sqr(delta);
+			if (!_finite(ret)) {
+				cout << "bad values for lamda, character " << ch << ", dof " << dof << endl;
+				exit(0);
+			}
+
+			for (comp = 0; comp < numComponents; comp++) {
+				grad[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof] += dataSet->charMu[ch][comp] * lamdaWeight * 2.0 * delta;
+			}
+			grad[intDofPos + skin->skel->numIntrinsicDofs * ch + dof] -= lamdaWeight * 2.0 * delta;
+		}
+	}
+#else
+	// lamda reconstruction (EV)
+	for (ch = 0; ch < dataSet->numCharacters; ch++) {
+		double lamdaWeight = 1.0;
+		double recon;
+
+		for (dof=0; dof < skin->skel->numIntrinsicDofs; dof++) {
+			recon = 0;
+			for (comp = 0; comp < numComponents; comp++) {
+				recon += dataSet->charMu[ch][comp] * vars[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof];
+			}
+
+			int ofs = intDofPos + skin->skel->numIntrinsicDofs * ch + dof;
+
+			ret += vars[ofs] * vars[ofs];
+			grad[ofs] += 2.0 * vars[ofs];
+
+			ret += -2.0 * vars[ofs] * recon;
+			grad[ofs] += -2.0 * recon;
+			for (comp = 0; comp < numComponents; comp++) {
+				grad[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof] += -2.0 * vars[ofs] * dataSet->charMu[ch][comp];
+
+				for (comp2 = 0; comp2 < numComponents; comp2++) {
+					ret += vars[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof] * vars[lamdaDofPos + comp2 * skin->skel->numIntrinsicDofs + dof] * dataSet->charPhi[ch][comp][comp2];
+					grad[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof] += vars[lamdaDofPos + comp2 * skin->skel->numIntrinsicDofs + dof] * dataSet->charPhi[ch][comp][comp2];
+					grad[lamdaDofPos + comp2 * skin->skel->numIntrinsicDofs + dof] += vars[lamdaDofPos + comp * skin->skel->numIntrinsicDofs + dof] * dataSet->charPhi[ch][comp][comp2];
+				}
+			}
+		}
+	}
+#endif
+
+	/*
+	// bone-length term
+	int iDof = 0;
+	double w = 10.0;
+	double w2 = 0.01;
+	for (tr=0; tr < skin->skel->transforms.size(); tr++) {
+		SkelTransform *curTransform = skin->skel->transforms.getT(tr);
+		if (curTransform->isIntrinsic) {
+			SkelTransform *mirrorTransform = NULL;
+
+			if (strcmp(curTransform->name, "lClavicleT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("rClavicleT");
+			if (strcmp(curTransform->name, "rClavicleT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("lClavicleT");
+			if (strcmp(curTransform->name, "lUpperArmT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("rUpperArmT");
+			if (strcmp(curTransform->name, "rUpperArmT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("lUpperArmT");
+			if (strcmp(curTransform->name, "lForearmT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("rForearmT");
+			if (strcmp(curTransform->name, "rForearmT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("lForearmT");
+			if (strcmp(curTransform->name, "lPelvisT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("rPelvisT");
+			if (strcmp(curTransform->name, "rPelvisT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("lPelvisT");
+			if (strcmp(curTransform->name, "lThighT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("rThighT");
+			if (strcmp(curTransform->name, "rThighT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("lThighT");
+			if (strcmp(curTransform->name, "lShinT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("rShinT");
+			if (strcmp(curTransform->name, "rShinT") == 0)
+				mirrorTransform = skin->skel->transforms.getT("lShinT");
+
+			Vec3d v = ((SkelTranslation*)curTransform)->curVal;
+			if (mirrorTransform) {
+				double invLen = 1.0 / v.length();
+				double len2 = ((SkelTranslation*)mirrorTransform)->curVal.length();
+				double delta = (v.length() - len2);
+				ret += w * sqr(delta);
+				
+				grad[intDofPos + iDof + 0] += 2.0 * w * 2.0 * delta * invLen * v[0];
+				grad[intDofPos + iDof + 1] += 2.0 * w * 2.0 * delta * invLen * v[1];
+				grad[intDofPos + iDof + 2] += 2.0 * w * 2.0 * delta * invLen * v[2];
+			}
+
+			if ((strcmp(curTransform->name+1, "ShinT") == 0) || (strcmp(curTransform->name+1, "ThighT") == 0)) {
+				double vlen = v.length2();
+				ret += w2 * vlen;
+				grad[intDofPos + iDof + 0] += w2 * 2.0 * v[0];
+				grad[intDofPos + iDof + 1] += w2 * 2.0 * v[1];
+				grad[intDofPos + iDof + 2] += w2 * 2.0 * v[2];
+			}
+
+			iDof += curTransform->numDofs();
+		}
+	}*/
+
+	lastErr = ret;
+
+	cout << lastErr << endl;
+
+	uShow();
+
+	redrawV();
+	uiWait();
+
+	return ret;
+}
+
+void USolver::evaluateGradient(Vecd& variables, Vecd& gradient) {
+	int i, ex;
+
+	if (lockIntrinsic) {
+		// lock intrinsic dofs
+		for (ex = 0; ex < dataSet->numCharacters; ex++) {
+			for (i = 0; i < skin->skel->numIntrinsicDofs; i++) {
+				grad[intDofPos + ex*skin->skel->numIntrinsicDofs + i] = 0;
+			}
+		}
+		for (i = weightDofPos; i < numVars; i++)
+			grad[i] = 0;
+	}
+	if (lockExtrinsic) {
+		for (i = lamdaDofPos; i < numVars; i++)
+			grad[i] = 0;
+	}
+	if (wOnly) {
+		for (i = intDofPos; i < numVars; i++)
+			grad[i] = 0;
+	}
+	if (pddOnly) {
+		for (i=0; i < pddDofPos; i++)
+			grad[i] = 0;
+	}
+	gradient = grad;
+}
+
+void USolver::solverStep() {
+	cout << "---" << endl;
+}
+
+void USolver::eStep() {
+	// ex = example (scan) index
+	int ex;
+	// pt = point index
+	int pt;
+	// inf = influence iterator
+	int inf;
+	// comp = component iterator
+	int comp;
+	// dof = dof iterator
+	int dof;
+	// y_ij = vertex with index j from example i
+	Vec3d y_ij;
+	// ii, jj, kk are used to iterate over vectors and matrices
+	int ii, jj, kk;
+	double sigma2 = sqr(sigma);
+	// current and last character id
+	int charID = -1, lastID = -1;
+	Vec3d *pddComps = new Vec3d[numComponents];
+
+	int numPts = 0;
+	dataSet->phiLogEntropy = 0;
+
+	// static data
+	static bool doneInit = false;
+	static VLVecd muAcc;
+	static Vec3d *aAcc;
+
+	// initialize static data
+	if (!doneInit) {
+		muAcc.SetSize(numComponents);
+		aAcc = new Vec3d[numComponents];
+		doneInit = true;
+	}
+
+	charID = dataSet->examples[0].character;
+	for (ex = 0; ex < dataSet->numExamples; ex++) {
+		// calculate the current reconstruction
+		updateSkel(ex, false, dataSet->examples[ex].isDress);
+		updatePoints(dataSet->examples[ex].character);
+		skin->updateMats();
+		if (dataSet->examples[ex].isDress) {
+			skin->updateJoints();
+		}
+		skin->updatePts();
+
+		if (lastID != charID) {
+			// clear the current average and covariance estimates
+			dataSet->charMu[charID].MakeZero();
+			dataSet->charMu[charID][0] = 1;
+//			dataSet->charPhi[charID].MakeDiag(sigma2);
+			dataSet->charPhi[charID].MakeZero();
+			dataSet->charPhi[charID][0][0] = 1;
+
+			muAcc.MakeZero();
+
+			numPts = 0;
+
+			// add in skeleton reconstruction
+			for (dof = 0; dof < skin->skel->numIntrinsicDofs; dof++) {
+				for (ii=1; ii < numComponents; ii++) {
+					for (jj=1; jj < numComponents; jj++) {
+						dataSet->charPhi[charID][ii][jj] += lamdaWeight *
+							vars[lamdaDofPos + ii*skin->skel->numIntrinsicDofs + dof] *
+							vars[lamdaDofPos + jj*skin->skel->numIntrinsicDofs + dof];
+					}
+					muAcc[ii] += lamdaWeight * 
+						(vars[intDofPos + charID*skin->skel->numIntrinsicDofs + dof] -
+						 vars[lamdaDofPos + dof]) * 
+						vars[lamdaDofPos + ii*skin->skel->numIntrinsicDofs + dof];
+				}
+			}
+		}
+
+		if (numComponents < 2)
+			continue;
+
+		// iterate over all observed points
+		for (pt = 0; pt < min(dataSet->examples[ex].numPts, skin->numPts); pt++) {
+			double mult;
+			Vec3d exPt;
+			if (!dataSet->examples[ex].getPt(pt, &exPt, &mult) || mult == 0)
+				continue;
+
+			memset(pddComps, 0, sizeof(Vec3d)*numComponents);
+			if (pddDofPos >= 0) {
+				for (inf = 0; inf < skin->maxInf; inf++) {
+					double weights[KNN_MAX_SAMPLES];
+					int joint = skin->infJoints[pt*skin->maxInf + inf];
+					int numSamples = skin->transPddOfs[joint+1]-skin->transPddOfs[joint];
+					int ofs = pt*skin->maxInf + inf;
+					knnQuatInterp(
+							skin->skel->transforms.getT(joint)->curCoord.q, 
+							skin->pddQuats + skin->transPddOfs[joint], numSamples,
+							skin->pddKeys + skin->ptPddOfs[ofs], weights);
+					for (comp = 0; comp < numComponents; comp++) {
+						int samp;
+						for (samp = 0; samp < numSamples; samp++) {
+							double *pdd = &varPdd(comp, pt, inf, samp, 0);
+							pddComps[comp] += weights[samp] * Vec3d(pdd[0], pdd[1], pdd[2]);
+						}
+					}
+				}
+			}
+
+			for (comp=0; comp < numComponents; comp++)
+				aAcc[comp].zeroElements();
+
+			Vec3d trans;
+			for (inf = 0; inf < skin->maxInf; inf++) {
+				if (skin->infJoints[pt*skin->maxInf + inf] >= 0) {
+					double w = skin->infWeights[pt*skin->maxInf + inf];
+					int joint = skin->infJoints[pt*skin->maxInf + inf];
+					
+					for (comp = 0; comp < numComponents; comp++) {
+						aAcc[comp] += w * vec4to3(skin->curMats[joint] * vec3to4z(varDressPt(pt, comp) + pddComps[comp]));
+					}
+					trans += w * (skin->curMats[joint]*Vec3d() - vec4to3(skin->curMats[joint] * vec3to4z(skin->dressJoints[joint])));
+				}
+			}
+
+			numPts++;
+
+			// phi += A'A
+			for (ii=1; ii < numComponents; ii++) {
+				for (jj=1; jj < numComponents; jj++) {
+					dataSet->charPhi[charID][ii][jj] += mult * aAcc[ii] * aAcc[jj];
+					if (!_finite(dataSet->charPhi[charID][ii][jj]))
+						cout << "bad";
+				}
+			}
+
+			// muAcc += (t-b-trans)'A
+			for (ii=1; ii < numComponents; ii++) {
+				muAcc[ii] += mult * (exPt - aAcc[0] - trans) * aAcc[ii];
+			}
+		}
+
+		lastID = charID;
+		if (ex < dataSet->numExamples-1) {
+			charID = dataSet->examples[ex+1].character;
+		}
+		if ((ex == dataSet->numExamples-1) || (lastID != charID)) {
+//			cout << (1.0 * skin->numPts / numPts) << endl;
+//			dataSet->charPhi[lastID] *= (1.0 * skin->numPts / numPts);
+//			muAcc *= (1.0 * skin->numPts / numPts);
+			muAcc[0] = 1;
+			dataSet->charPhi[lastID][0][0] = 1;
+			for (ii=1; ii < numComponents; ii++) {
+				dataSet->charPhi[lastID][ii][ii] += sigma2;
+			}
+
+			// actual phi is the inverse
+			if (lastID == 0) {
+				cout << "saving" << endl;
+				ofstream mat("m.txt");
+				mat << dataSet->charPhi[lastID];
+				mat << endl;
+				mat << muAcc;
+				mat.close();
+			}
+			dataSet->charPhi[lastID] = inv(dataSet->charPhi[lastID]);
+			if (lastID == 0) {
+				cout << "saving" << endl;
+				ofstream mat("m-inv.txt");
+				mat << dataSet->charPhi[lastID];
+				mat.close();
+			}
+
+			dataSet->charMu[lastID] = dataSet->charPhi[lastID] * muAcc;
+			dataSet->charMu[lastID][0] = 1;
+
+			// update log entropy
+			double det = 1;
+			VLMatd U, V; VLVecd diag;
+			SVDFactorization(dataSet->charPhi[lastID], U, V, diag);
+			for (ii = 0; ii < numComponents; ii++)
+				det *= diag[ii];
+			dataSet->phiLogEntropy += log(det);
+
+			// add mu'mu into curPhi, and set 1st row & column to mu
+			for (ii=0; ii < numComponents; ii++) {
+				for (jj=0; jj < numComponents; jj++) {
+					if (ii == 0)
+						dataSet->charPhi[lastID][ii][jj] = dataSet->charMu[lastID][jj];
+					else if (jj == 0)
+						dataSet->charPhi[lastID][ii][jj] = dataSet->charMu[lastID][ii];
+					else {
+						dataSet->charPhi[lastID][ii][jj] = 
+							sigma2 * dataSet->charPhi[lastID][ii][jj] + dataSet->charMu[lastID][ii] * dataSet->charMu[lastID][jj];
+					}
+				}
+			}
+		}
+	}
+
+	delete []pddComps;
+}
+
+void USolver::addPdd() {
+	static double *errors = NULL;
+	static double *eCount = NULL;
+	int ex, pt, inf, tr, comp;
+	int i;
+
+	if (errors == NULL) {
+		errors = new double[skin->numTrans * dataSet->numExamples];
+		eCount = new double[skin->numTrans * dataSet->numExamples];
+		memset(errors, 0, sizeof(double) * skin->numTrans * dataSet->numExamples);
+		memset(eCount, 0, sizeof(double) * skin->numTrans * dataSet->numExamples);
+		// don't use example 0
+		for (i=0; i < skin->numTrans; i++)
+			eCount[i] = -1;
+		// don't allow influences for joint 2
+		for (i=0; i < dataSet->numExamples; i++)
+			eCount[i*skin->numTrans + 2] = -1;
+	}
+	else {
+		for (i=0; i < skin->numTrans * dataSet->numExamples; i++)
+			if (eCount[i] > 0) eCount[i] = 0;
+	}
+
+	/*
+	for (ex=0; ex < dataSet->numExamples; ex++) {
+		updateSkel(ex);
+		updatePoints(dataSet->examples[ex].character);
+		skin->updateMats();
+		if (ex == 0) {
+			skin->updateJoints();
+		}
+		skin->updatePts();
+
+		for (pt = 0; pt < skin->numPts; pt++) {
+			// don't go past the number of points in this set
+			if (pt > dataSet->examples[ex].numPts)
+				break;
+
+			// ignore points in the PDD mask
+			if (pddMask && pddMask[pt] == 0)
+				continue;
+
+			double mult = 1;
+			if (dataSet->examples[i].ptsConf)
+				mult = dataSet->examples[ex].ptsConf[pt];
+			if (mult > 0) {
+				Vec3d delta = skin->curPts[pt] - dataSet->examples[ex].pts[pt];
+				for (inf=0; inf < skin->maxInf; inf++) {
+					int curTrans = skin->infJoints[pt * skin->maxInf + inf];
+					if (curTrans >= 0 && eCount[ex * skin->numTrans + curTrans] >= 0) {
+						errors[ex * skin->numTrans + curTrans] += mult * delta.length2();
+//						eCount[ex * skin->numTrans + curTrans]++;
+					}
+				}
+			}
+		}
+	}*/
+	for (ex=0; ex < dataSet->numExamples; ex++) {
+		updateSkel(ex);
+		for (tr = 3; tr < skin->numTrans; tr++) {
+			QuatNorm q = skin->skel->transforms.getT(tr)->curCoord.q;
+			double minDist = quatDist(q, QuatNorm(0,0,0,1));
+
+			int numSamples = skin->transPddOfs[tr+1]-skin->transPddOfs[tr];
+			for (inf=0; inf < numSamples; inf++) {
+				Vec4d &v = skin->pddQuats[skin->transPddOfs[tr]+inf];
+				double dist = quatDist(q, QuatNorm(v[0],v[1],v[2],v[3]));
+				if (dist < minDist) {
+					minDist = dist;
+				}
+			}
+
+			errors[ex * skin->numTrans + tr] = minDist;
+		}
+	}
+
+	// find the maximum
+	double maxV = 0;
+	int maxEx = -1, maxTrans = 0;
+	for (ex=0; ex < dataSet->numExamples; ex++) {
+		for (tr=0; tr < skin->numTrans; tr++) {
+			double v;
+			if (eCount[ex * skin->numTrans + tr] >= 0) {
+				v = errors[ex * skin->numTrans + tr]; // / eCount[ex * skin->numTrans + tr];
+				// downweight based on # of PDDs already assigned to this joint
+				//v /= 1.0 + skin->transPddOfs[tr+1] - skin->transPddOfs[tr];
+				if (v > maxV) {
+					maxV = v;
+					maxEx = ex;
+					maxTrans = tr;
+				}
+			}
+		}
+	}
+
+	if (maxEx >= 0) {
+		// save old PDDs
+		int oldNumPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+		double *oldPdds = new double[oldNumPddVars * numComponents];
+		memcpy(oldPdds, vars.n + pddDofPos, sizeof(double) * oldNumPddVars * numComponents);
+
+		// add new PDD
+		cout << "adding a key for example " << maxEx << ", joint " << skin->skel->transforms.getT(maxTrans)->name << endl;
+		updateSkel(maxEx);
+		QuatNorm q = skin->skel->transforms.getT(maxTrans)->curCoord.q;
+		q.normalize();
+		skin->insertPdd(maxTrans, q);
+		cout << "quat = " << q << "; value = " << maxV << endl;
+
+		// update number of variables
+		int newNumPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+		numVars = pddDofPos + newNumPddVars * numComponents;
+		vars.resize(numVars);
+		grad.resize(numVars);
+		dumpDofPos();
+
+		// copy old PDDs to new variables
+		int oldIndex = 0, newIndex = pddDofPos;
+		for (pt=0; pt < skin->numPts; pt++) {
+			for (inf=0; inf < skin->maxInf; inf++) {
+				int joint = skin->infJoints[pt*skin->maxInf + inf];
+				if (joint >= 0) {
+					int numTrans = skin->transPddOfs[joint + 1] - skin->transPddOfs[joint];
+					if (skin->infJoints[pt*skin->maxInf + inf] == maxTrans)
+						numTrans--;
+					for (i=0; i < numTrans * 3; i++) {
+						for (comp = 0; comp < numComponents; comp++) {
+							vars[newIndex + comp*newNumPddVars] = oldPdds[oldIndex + comp*oldNumPddVars];
+						}
+						newIndex++;
+						oldIndex++;
+					}
+					if (skin->infJoints[pt*skin->maxInf + inf] == maxTrans) {
+						for (i=0; i < 3; i++) {
+							for (comp = 0; comp < numComponents; comp++) {
+								vars[newIndex + comp*newNumPddVars] = 0;
+							}
+							newIndex++;
+						}
+					}
+				}
+			}
+		}
+
+		// don't use this one again!
+		eCount[maxEx * skin->numTrans + maxTrans] = -1;
+
+		delete []oldPdds;
+	}
+}
+
+void USolver::pddsToVars() {
+	numVars = pddDofPos + skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+	vars.resize(numVars);
+	grad.resize(numVars);
+	memcpy(vars.n + pddDofPos, skin->pddKeys, 
+		sizeof(double) * skin->ptPddOfs[skin->numPts * skin->maxInf] * 3);
+	dumpDofPos();
+}
+
+
+// UPtSolver ==============================================
+
+UPointSolver::UPointSolver(USolver *u) { 
+	uSolver = u; 
+	skin = uSolver->skin;
+}
+
+void UPointSolver::initPt(int pt) {
+	curPt = pt;
+
+	numVars = 0;
+	dressDofPos = numVars;
+	numVars += 3 * uSolver->numComponents;
+	weightDofPos = numVars;
+	numVars += (skin->maxInf-1);
+	pddDofPos = numVars;
+	numPdds = skin->ptPddOfs[(curPt+1)*skin->maxInf] - skin->ptPddOfs[curPt*skin->maxInf];
+	numVars += numPdds * 3 * uSolver->numComponents;
+
+	vars.resize(numVars);
+	grad.resize(numVars);
+
+	cout << "dress: " << dressDofPos << 
+		", weights: " << weightDofPos << ", PDDs: " << pddDofPos << 
+		", total: " << vars.size() << endl;
+
+
+	int inf;
+	for (inf = 0; inf < skin->maxInf-1; inf++) {
+		vars[weightDofPos + inf] = uSolver->varWeight(curPt, inf);
+	}
+
+	int comp;
+	for (comp = 0; comp < uSolver->numComponents; comp++) {
+		Vec3d v = uSolver->varDressPt(curPt, comp);
+		vars[dressDofPos + 3*comp + 0] = v[0];
+		vars[dressDofPos + 3*comp + 1] = v[1];
+		vars[dressDofPos + 3*comp + 2] = v[2];
+
+		int pdd;
+		int ofs = uSolver->pddDofPos + skin->ptPddOfs[curPt*skin->maxInf]*3 + 
+			comp*(skin->ptPddOfs[skin->numPts * skin->maxInf] * 3);
+		for (pdd = 0; pdd < numPdds; pdd++) {
+			vars[pddDofPos + (numPdds*comp + pdd)*3 + 0] = uSolver->vars[ofs + pdd*3 + 0];
+			vars[pddDofPos + (numPdds*comp + pdd)*3 + 1] = uSolver->vars[ofs + pdd*3 + 0];
+			vars[pddDofPos + (numPdds*comp + pdd)*3 + 2] = uSolver->vars[ofs + pdd*3 + 0];
+		}
+	}
+}
+
+void UPointSolver::donePt() {
+	int inf;
+	for (inf = 0; inf < skin->maxInf-1; inf++) {
+		uSolver->varWeight(curPt, inf) = vars[weightDofPos + inf];
+	}
+
+	int comp;
+	for (comp = 0; comp < uSolver->numComponents; comp++) {
+		Vec3d v = uSolver->varDressPt(curPt, comp);
+		uSolver->vars[dressDofPos + (comp * skin->numPts + curPt) * 3 + 0] = vars[dressDofPos + 3*comp + 0];
+		uSolver->vars[dressDofPos + (comp * skin->numPts + curPt) * 3 + 1] = vars[dressDofPos + 3*comp + 1];
+		uSolver->vars[dressDofPos + (comp * skin->numPts + curPt) * 3 + 2] = vars[dressDofPos + 3*comp + 2];
+
+		int pdd;
+		int ofs = uSolver->pddDofPos + skin->ptPddOfs[curPt*skin->maxInf]*3 + 
+			comp*(skin->ptPddOfs[skin->numPts * skin->maxInf] * 3);
+		for (pdd = 0; pdd < numPdds; pdd++) {
+			uSolver->vars[ofs + pdd*3 + 0] = vars[pddDofPos + (numPdds*comp + pdd)*3 + 0];
+			uSolver->vars[ofs + pdd*3 + 0] = vars[pddDofPos + (numPdds*comp + pdd)*3 + 1];
+			uSolver->vars[ofs + pdd*3 + 0] = vars[pddDofPos + (numPdds*comp + pdd)*3 + 2];
+		}
+	}
+}
+
+double UPointSolver::evaluateFunction(Vecd& variables) {
+	int ex, tr, ni, inf, samp, ch, dof;
+	int comp, comp2;
+	double ret = 0;
+
+	Vec3d dressGrad;
+	static int oldPddVars = -1;
+	int numPddVars = skin->ptPddOfs[skin->numPts * skin->maxInf] * 3;
+	static double *pddGrad = NULL;
+	if (oldPddVars != numPddVars) {
+		if (pddGrad) delete []pddGrad;
+		pddGrad = new double[numPddVars];
+		oldPddVars = numPddVars;
+	}
+
+	int pddOfs = skin->ptPddOfs[curPt * skin->maxInf] * 3;
+
+	if (&variables != &vars)
+		vars = variables;
+	grad.zeroElements();
+
+	// update weights
+	int wp = weightDofPos;
+	double sum = 0;
+	for (inf=1; inf < skin->maxInf; inf++) {
+		if (skin->infJoints[curPt*skin->maxInf + inf] >= 0) {
+			sum += vars[wp];
+			skin->infWeights[curPt*skin->maxInf + inf] = vars[wp];
+		}
+		wp++;
+	}
+	skin->infWeights[curPt*skin->maxInf] = 1.0 - sum;
+
+	// point-distance terms
+	for (ex=0; ex < uSolver->dataSet->numExamples; ex++) {
+		double mult = 1;
+		Vec3d exPt;
+		if (!uSolver->dataSet->examples[ex].getPt(curPt, &exPt, &mult) || mult == 0)
+			continue;
+
+		memset(pddGrad + pddOfs, 0, sizeof(double)*numPdds*3);
+
+		uSolver->updateSkel(ex, false, uSolver->dataSet->examples[ex].isDress);
+		skin->skel->updateDerivs();
+		skin->skel->updateGlobalDerivs();
+		skin->updateMats();
+		if (uSolver->dataSet->examples[ex].isDress) {
+			skin->updateJoints();
+		}
+
+		// update skin points
+		skin->dressPts[curPt] = Vec3d();
+		memset(skin->pddKeys + skin->ptPddOfs[curPt*skin->maxInf], 0, sizeof(Vec3d) * numPdds);
+		for (comp = 0; comp < uSolver->numComponents; comp++) {
+			double w = uSolver->dataSet->charMu[uSolver->dataSet->examples[ex].character][comp];
+			if (w != 0) {
+				// dress
+				Vec3d v(vars[dressDofPos + 3*comp + 0], vars[dressDofPos + 3*comp + 1], vars[dressDofPos + 3*comp + 2]);
+				skin->dressPts[curPt] += w * v;
+
+				// pdds
+				int var;
+				for (var = 0; var < numPdds*3; var++) {
+					skin->pddKeys[(pddOfs/3) + var/3][var%3] += w * vars[pddDofPos + comp * numPdds * 3 + var];
+				}
+			}
+		}
+		skin->updatePts(curPt, curPt+1);
+
+		Vec3d delta = skin->curPts[curPt] - exPt;
+		ret += mult * delta.length2();
+
+		dressGrad.zeroElements();
+		skin->calcGrad(curPt, 2.0 * mult * delta, 
+			dressGrad.n, 
+			NULL,	// intrinsics
+			NULL,	// pose
+			grad.n + weightDofPos, 
+			pddGrad, 
+			uSolver->dataSet->examples[ex].isDress);
+
+		for (comp = 0; comp < uSolver->numComponents; comp++) {
+			double w = uSolver->dataSet->charMu[uSolver->dataSet->examples[ex].character][comp];
+			if (w != 0) {
+				int ofs = dressDofPos + comp * 3;
+				grad.n[ofs + 0] += w * dressGrad[0];
+				grad.n[ofs + 1] += w * dressGrad[1];
+				grad.n[ofs + 2] += w * dressGrad[2];
+			}
+		}
+
+		// distribute PDD gradient over components
+		for (comp = 0; comp < uSolver->numComponents; comp++) {
+			double w = uSolver->dataSet->charMu[uSolver->dataSet->examples[ex].character][comp];
+			if (w != 0) {
+				int ofs = pddDofPos + comp * numPdds * 3;
+				int var;
+				for (var = 0; var < numPdds*3; var++)
+					grad[ofs + var] += w * pddGrad[pddOfs + var];
+			}
+		}
+	}
+
+	uiWait();
+	lastErr = ret;
+	return ret;
+}
+
+void UPointSolver::evaluateGradient(Vecd& variables, Vecd& gradient) {
+	gradient = grad;
+}
+
+void UPointSolver::solverStep() {
+//	cout << lastErr << endl;
+}

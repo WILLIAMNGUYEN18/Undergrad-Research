@@ -1,0 +1,77 @@
+set ITER 100
+set RES 2k
+set POSE d
+set POSE_ID 1
+x scripts/uMatch.txt
+set POSE e
+set POSE_ID 2
+x scripts/uMatch.txt
+set POSE g
+set POSE_ID 3
+x scripts/uMatch.txt
+set POSE h
+set POSE_ID 4
+x scripts/uMatch.txt
+set POSE i
+set POSE_ID 5
+x scripts/uMatch.txt
+set POSE k
+set POSE_ID 6
+x scripts/uMatch.txt
+set POSE l
+set POSE_ID 7
+x scripts/uMatch.txt
+set POSE m
+set POSE_ID 8
+x scripts/uMatch.txt
+set POSE n
+set POSE_ID 9
+x scripts/uMatch.txt
+set POSE o
+set POSE_ID 10
+x scripts/uMatch.txt
+set POSE p
+set POSE_ID 11
+x scripts/uMatch.txt
+set POSE q
+set POSE_ID 12
+x scripts/uMatch.txt
+set POSE r
+set POSE_ID 13
+x scripts/uMatch.txt
+set POSE s
+set POSE_ID 14
+x scripts/uMatch.txt
+set POSE ze
+set POSE_ID 15
+x scripts/uMatch.txt
+set POSE zg
+set POSE_ID 16
+x scripts/uMatch.txt
+set POSE zh
+set POSE_ID 17
+x scripts/uMatch.txt
+set POSE zi
+set POSE_ID 18
+x scripts/uMatch.txt
+set POSE zl
+set POSE_ID 19
+x scripts/uMatch.txt
+set POSE zm
+set POSE_ID 20
+x scripts/uMatch.txt
+set POSE zn
+set POSE_ID 21
+x scripts/uMatch.txt
+set POSE zo
+set POSE_ID 22
+x scripts/uMatch.txt
+set POSE zq
+set POSE_ID 23
+x scripts/uMatch.txt
+set POSE zr
+set POSE_ID 24
+x scripts/uMatch.txt
+set POSE zs
+set POSE_ID 25
+x scripts/uMatch.txt

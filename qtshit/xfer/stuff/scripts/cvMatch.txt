@@ -1,0 +1,40 @@
+set RES 2k
+set ID 9002
+scInitSCMesh data/james-{RES}.ply data/csr/csr{ID}a.po.txt data/csr-{RES}/csr{ID}a-{RES}.ply
+//scInitSCMesh data/james-{RES}.ply
+scCalcTransInfluences
+scUpdateLocal
+
+cvInitFromSkin 1
+cvAutoUpdate
+cvBuildExampleSet data/csr-{RES}/set-{ID}.txt
+//cvBuildExampleSet data/set-temp.txt
+
+//scSaveSkin auto.skin
+//scLoadSkin auto.skin
+
+set POSE d
+set POSEID 1
+//cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+//cvLoadSurfWeights data/lock-{RES}.dat
+//cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+//cvLoadNeighWeights data/bend.tex
+//cvRunSurfaceMatch 1 0.01 5 100
+//cvRunSurfaceMatch 10 1 1 20
+
+cvEdgeMatchInit {POSEID} data/csr/csr{ID}{POSE}.mkr data/mrefs-{RES}.txt
+//cvEdgeMatchLoadPly data/2g-2k.ply data/map-2k-10k.dat
+//cvEdgeMatchLoadPly data/2g-10k.ply data/map-10k-60k.dat
+//cvEdgeMatchSolve 1 0.1 0.01 1 100
+//clothInit
+//cvEdgeMatchMangle 2
+//cvEdgeMatchMangle 0 1 1 0.6
+//cvEdgeMatchMangle 1 0.05
+//cvEdgeMatchSolve 0 0 1 0 20
+//cvSkinMatchInit ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-10k.txt
+//cvSkinMatchSolve 1 1 5 20
+
+cvLoadNeighWeights data/bend-{RES}.tex
+cvLoadSurfWeights data/lock-{RES}.disp
+scColor
+//cvEdgeMatchLoadDisp data/examples/2_D-10k.disp data/map-10k-60k.dat data/2a-10k.ply

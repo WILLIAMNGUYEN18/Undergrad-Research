@@ -1,0 +1,331 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0103 
+header_name {.h} 
+code_name {.cxx}
+decl {\#include "doppel2.h"} {selected public
+} 
+
+decl {\#include "charVec.h"} {} 
+
+decl {\#include "cli.h"} {} 
+
+decl {\#include "skeleton.h"} {} 
+
+decl {\#include "cvgf.h"} {} 
+
+decl {\#include "trimesh.h"} {} 
+
+decl {\#include "trimesh_render.h"} {} 
+
+decl {\#include "skinCalc.h"} {} 
+
+decl {\#include "surfaceDef.h"} {} 
+
+decl {\#include "markers.h"} {} 
+
+decl {\#include "vl/VLd.h"} {} 
+
+decl {extern CharVec charVec;} {} 
+
+decl {extern CVGoalFunction *cvGF;} {} 
+
+decl {extern TriMesh *matchMeshes;} {} 
+
+decl {extern Skeleton *matchPoses;} {} 
+
+decl {extern Skin curSkin, scSkin;} {} 
+
+decl {\#include "propui.h"} {public
+} 
+
+decl {\#include "cvMaster.h"} {} 
+
+decl {class CVUI;} {} 
+
+decl {extern CVUI *cvUI;} {
+  callback {int i;
+for (i=1; i <= exampleB->size(); i++) {
+ if (exampleB->selected(i) && i-1 < cvGF->numExamples) {
+
+cv->updateCurComponents(cvGF->examples[i-1].dofs);
+cv->updateLocalPos(cvGF->curMu[cvGF->examples[i-1].charID].Ref());
+   break;
+ }
+}}
+} 
+
+decl {extern LADeformationGoalFunction *matchGF;} {} 
+
+decl {TriMesh *meshToRender;} {public
+} 
+
+class CVUI {open : {public Tool}
+} {
+  Function {CVUI()} {open
+  } {
+    Fl_Window cvWindow {
+      label CharVec open
+      xywh {438 90 380 522}
+      code0 {\#include "tool.h"}
+      code1 {\#include "Fl/fl_file_chooser.h"} visible
+    } {
+      Fl_Round_Button showCV {
+        label {show current CharVec}
+        callback {charVec.vis = (showCV->value() != 0);
+redrawV();}
+        xywh {15 15 25 25} down_box ROUND_DOWN_BOX
+      }
+      Fl_Browser exampleB {
+        label Examples
+        callback {if (showSelEx->value() != 0)
+  redrawV();}
+        xywh {15 60 240 85} type Multi align 5
+      }
+      Fl_Round_Button showSelEx {
+        label {show selected example}
+        callback {redrawV();}
+        xywh {15 150 25 25} down_box ROUND_DOWN_BOX
+      }
+      Fl_Button {} {
+        label Update
+        callback {updateExampleB();}
+        xywh {260 90 80 25}
+      }
+      Fl_Value_Slider comp0VS {
+        label {Comp \#0}
+        callback {setComponents();}
+        xywh {70 260 295 25} type Horizontal align 4 minimum -1
+      }
+      Fl_Value_Slider comp1VS {
+        label {Comp \#1}
+        callback {setComponents();}
+        xywh {70 285 295 25} type Horizontal align 4 minimum -1
+      }
+      Fl_Button {} {
+        label {Edit Skeleton}
+        callback {showSkel();}
+        xywh {105 205 120 25}
+      }
+      Fl_Button {} {
+        label {Copy to CV}
+        callback {int i;
+for (i=1; i <= exampleB->size(); i++) {
+ if (exampleB->selected(i) && i-1 < cvGF->numExamples) {
+   int j;
+   for (j=0; j < charVec.numPts; j++) {
+    charVec.tm->getPt(j) =cvGF->examples[i-1].trans[j]* cvGF->examples[i-1].points[j];
+    charVec.tm->getPtColor(j) = Vec3d(1,1,1);
+    charVec.tm->getPtColor(j)[1] = cvGF->examples[i-1].conf[j];
+   }
+   charVec.tm->calcNormals();
+   break;
+ }
+}}
+        xywh {260 120 80 25}
+      }
+      Fl_Round_Button showMarkers {
+        label {show marker matches}
+        callback {redrawV();}
+        xywh {210 15 25 25} down_box ROUND_DOWN_BOX
+      }
+      Fl_Value_Slider comp2VS {
+        label {Comp \#2}
+        callback {setComponents();}
+        xywh {70 310 295 25} type Horizontal align 4 minimum -1
+      }
+      Fl_Value_Slider comp3VS {
+        label {Comp \#3}
+        callback {setComponents();}
+        xywh {70 335 295 25} type Horizontal align 4 minimum -1
+      }
+      Fl_Value_Slider comp4VS {
+        label {Comp \#4}
+        callback {setComponents();}
+        xywh {70 360 295 25} type Horizontal align 4 minimum -1
+      }
+      Fl_Value_Slider comp5VS {
+        label {Comp \#5}
+        callback {setComponents();}
+        xywh {70 385 295 25} type Horizontal align 4 minimum -1
+      }
+      Fl_Button {} {
+        label {Set comps}
+        callback {int i;
+for (i=1; i <= exampleB->size(); i++) {
+ if (exampleB->selected(i) && i-1 < cvGF->numExamples) {
+   if (cvGF->cv->numComponents > 1)
+    comp0VS->value(cvGF->curMu[cvGF->examples[i-1].charID][1]);
+   if (cvGF->cv->numComponents > 2)
+    comp1VS->value(cvGF->curMu[cvGF->examples[i-1].charID][2]);
+   if (cvGF->cv->numComponents > 3)
+    comp2VS->value(cvGF->curMu[cvGF->examples[i-1].charID][3]);
+   if (cvGF->cv->numComponents > 4)
+    comp3VS->value(cvGF->curMu[cvGF->examples[i-1].charID][4]);
+   if (cvGF->cv->numComponents > 5)
+    comp4VS->value(cvGF->curMu[cvGF->examples[i-1].charID][5]);
+   if (cvGF->cv->numComponents > 6)
+    comp5VS->value(cvGF->curMu[cvGF->examples[i-1].charID][6]);
+   setComponents();
+   break;
+ }
+}}
+        xywh {260 150 80 25}
+      }
+      Fl_Button {} {
+        label {Set skeleton}
+        callback {int i;
+for (i=1; i <= exampleB->size(); i++) {
+ if (exampleB->selected(i) && i-1 < cvGF->numExamples) {
+
+charVec.updateCurComponents(cvGF->examples[i-1].dofs);
+charVec.updateLocalPos(cvGF->curMu[cvGF->examples[i-1].charID].Ref());
+charVec.updateTM(cvGF->examples[i-1].trans);
+   break;
+ }
+}}
+        xywh {260 180 80 25}
+      }
+    }
+    code {name="CharVec";
+meshToRender = NULL;} {}
+    Fl_Window skelWindow {
+      label Skels open
+      xywh {237 159 1039 373} hide
+    } {
+      Fl_Scroll skelScroll {open
+        xywh {0 0 1035 340} type HORIZONTAL box DOWN_BOX
+      } {}
+      Fl_Button {} {
+        label {Load pose...}
+        callback {char *fname = fl_file_chooser("Load pose...", "*.po.txt", NULL);
+if (fname) {
+  ifstream in;
+  if (!openIFStream(&in, fname, "pose")) {
+    return;
+  }
+  charVec.skel->loadPose(in);
+}}
+        xywh {0 345 85 25}
+      }
+      Fl_Button {} {
+        label {Save pose...}
+        callback {char *fname = fl_file_chooser("Save pose...", "*.po.txt", NULL);
+//if (fname)
+//  savePose(fname);}
+        xywh {90 345 85 25}
+      }
+    }
+  }
+  Function {show()} {open
+  } {
+    code {cvWindow->show();} {}
+  }
+  Function {drawGL()} {open return_type {virtual void}
+  } {
+    code {//if (charVec.update)
+//  charVec.updateTM();
+if (meshToRender) {
+  glEnable(GL_LIGHTING);
+  renderTriMesh(meshToRender, dispMode);
+}
+if (charVec.vis) {
+  if (lightingEnabled)
+    glEnable(GL_LIGHTING);
+  else
+    glDisable(GL_LIGHTING);
+  charVec.render(dispMode, bkgColor);
+}
+if (showSelEx->value() != 0) {
+ int i;
+ for (i=1; i <= exampleB->size(); i++) {
+  if (exampleB->selected(i) && i-1 < cvGF->numExamples) {
+   matchPoses[i-1].drawGL();
+   renderTriMesh(&matchMeshes[i-1], dispMode, bkgColor);
+//   int j;
+//   for (j=0; j < matchMeshes[i-1].numPts(); j++) {
+//     glbSphere(matchMeshes[i-1].getPt(j), 0.01, 5);
+//   }
+  }
+ }
+}
+if (showMarkers->value() != 0 && matchGF) {
+int i;
+for (i=0; i < matchGF->markerRefs.size(); i++) {
+if (matchGF->markerRefs[i] > 0 && !matchGF->markers->markers[i].pos.iszero()) {
+glColor3f(1, 1, 0);
+glbSphere(matchGF->markers->markers[i].pos, 0.01);
+glColor3f(0, 1, 0);
+glbSphere(matchGF->curMesh->getPt(matchGF->markerRefs[i]), 0.01);
+glDisable(GL_LIGHTING);
+glColor3f(1, 0, 0);
+glBegin(GL_LINES);
+matchGF->markers->markers[i].pos.glVertex();
+matchGF->curMesh->getPt(matchGF->markerRefs[i]).glVertex();
+glEnd();
+glEnable(GL_LIGHTING);
+}
+}
+}} {}
+  }
+  Function {notify(const char *msg)} {open return_type {void *}
+  } {
+    code {return NULL;} {}
+  }
+  Function {updateExampleB()} {open return_type void
+  } {
+    code {exampleB->clear();
+int i;
+for (i=0; i < cvGF->numExamples; i++) {
+ char s[80];
+ sprintf(s, "%d: %d", i, cvGF->examples[i].charID);
+ exampleB->add(s, NULL);
+}} {}
+  }
+  Function {setComponents()} {open return_type void
+  } {
+    code {double comps[7];
+comps[0] = 1;
+comps[1] = comp0VS->value();
+comps[2] = comp1VS->value();
+comps[3] = comp2VS->value();
+comps[4] = comp3VS->value();
+comps[5] = comp4VS->value();
+comps[6] = comp5VS->value();
+//cvGF->cv->updateCurComponents(cvGF->examples[cvGF->numExamples-1].dofs);
+cvGF->cv->updateLocalPos(comps, 6);
+cvGF->cv->updateTM();
+redrawV();} {}
+  }
+  Function {showSkel()} {open
+  } {
+    code {skelWindow->show();
+//skelScroll->clear();
+PObject *obj = new PObject(charVec.skel);
+obj->create("CV Skeleton", 5, 5, skelScroll);
+obj->editCB = editCB;} {}
+  }
+  Function {editCB(PropUI*)} {open return_type {static void}
+  } {
+    code {charVec.skel->updateCoords();
+scSkin.skel->copyVals(charVec.skel);
+scSkin.skel->updateCoords();
+scSkin.updatePoints();
+double dofs[100];
+charVec.dofsFromSkel(charVec.skel, dofs);
+charVec.updateCurComponents(dofs);
+cvUI->setComponents();} {}
+  }
+  decl {\#include "skinCalc.h"} {}
+  Function {clickGL(GLuint *nameBuf, double x, double y, int button)} {open return_type {virtual void}
+  } {
+    code {cvClick(x, y, button);} {}
+  }
+  Function {dragGL(int x, int y)} {open return_type {virtual void}
+  } {
+    code {cvDrag(x, y);} {}
+  }
+  Function {startDragGL(GLuint *nameBuf, int x, int y)} {open return_type {virtual bool}
+  } {
+    code {return cvStartDrag(nameBuf, x, y);} {}
+  }
+} 

@@ -1,0 +1,549 @@
+#include <float.h>
+#include "doppel2.h"
+#include "cvgf.h"
+#include "skeleton.h"
+#include "trimesh.h"
+#include "viewer.h"
+#include "jactest.h"
+#include "ANN/ANN.h"
+#include "skinCalc.h"
+#include "cgsolver.h"
+
+// used by Keeper class to access the current instance:
+//CVGoalFunction *curCVGF;
+
+int compMM(const void *a, const void *b) {
+	double e1 = ((MMRecord*)a)->p;
+	double e2 = ((MMRecord*)b)->p;
+	if (e1 < e2)
+		return 1;
+	else if (e1 > e2)
+		return -1;
+	else
+		return 0;
+}
+
+void CVExample::buildExample(TriMesh *tm, Skin *skin) {
+	int i, targetPt = 0;
+
+	numPoints = tm->numPts();
+	points = new Vec3d[numPoints];
+	for (i=0; i < numPoints; i++) {
+		points[targetPt] = tm->getPt(i);
+
+		// cut off the platform
+		if (points[targetPt][2] > -0.980)
+			targetPt++;
+	}
+	cout << "eliminated " << (numPoints-targetPt) << " points" << endl;
+	numPoints = targetPt;
+
+	numTPoints = skin->numPts;
+	trans = new Mat4d[numTPoints];
+	iTrans = new Mat4d[numTPoints];
+	for (i=0; i < numTPoints; i++) {
+		Mat4d m = skin->points[i].localFrame;
+		trans[i] = m;
+		iTrans[i] = m.inverse();
+	}
+
+	numDofs = 1;
+	dofs = new double[numDofs];
+	dofs[0] = ((SkelPolarAxisRotation*)skin->skel->transforms.getT("lElbowA"))->curTheta;
+}
+
+void CVExample::save(char *fname) {
+	FILE *f;
+
+	if (!openFile(&f, fname, "wb", "example file"))
+		return;
+
+	fwrite(&numPoints, sizeof(int), 1, f);
+	fwrite(points, sizeof(Vec3d), numPoints, f);
+	fwrite(&numTPoints, sizeof(int), 1, f);
+	fwrite(trans, sizeof(Mat4d), numTPoints, f);
+	fwrite(iTrans, sizeof(Mat4d), numTPoints, f);
+	fwrite(&numDofs, sizeof(int), 1, f);
+	fwrite(dofs, sizeof(double), numDofs, f);
+//	fwrite(&charID, sizeof(int), 1, f);
+
+	fclose(f);
+}
+
+void CVExample::load(char *fname) {
+	FILE *f;
+
+	if (!openFile(&f, fname, "rb", "example file"))
+		return;
+
+	fread(&numPoints, sizeof(int), 1, f);
+	points = new Vec3d[numPoints];
+	fread(points, sizeof(Vec3d), numPoints, f);
+	fread(&numTPoints, sizeof(int), 1, f);
+	trans = new Mat4d[numTPoints];
+	fread(trans, sizeof(Mat4d), numTPoints, f);
+	iTrans = new Mat4d[numTPoints];
+	fread(iTrans, sizeof(Mat4d), numTPoints, f);
+	fread(&numDofs, sizeof(int), 1, f);
+	dofs = new double[numDofs];
+	fread(dofs, sizeof(double), numDofs, f);
+//	fread(&charID, sizeof(int), 1, f);
+
+	fclose(f);
+}
+
+CVGoalFunction::CVGoalFunction() {
+	cv = NULL;
+	matchMat = NULL;
+	matches = NULL;
+	solver = NULL;
+
+	distDeviation = 0.002;
+	matchDeviation = 0.05;
+
+	lockShape = false;
+	lockPose = false;
+
+	numExamples = 0;
+}
+
+void CVGoalFunction::init(int iNumExamples, int iNumComponents, int iNumChars) {
+	int i;
+
+	numExamples = iNumExamples;
+	numComponents = iNumComponents;
+	numChars = iNumChars;
+
+	cout << "examples: " << numExamples << endl;
+	cout << "components: " << numComponents << endl;
+	cout << "characters: " << numChars << endl;
+
+	curN = new double[numChars * numComponents];
+	memset(curN, 0, numChars * numComponents * sizeof(double));
+
+	cvDofs = cv->numPts * 3 * NUM_P_VALUES * (numComponents+1);
+	curVars.resize(cvDofs); // + 3 * iNumExamples);
+	curGrad.resize(cvDofs); //+ 3 * iNumExamples);
+
+	matches = new vector<MMRecord*>[cv->numPts];
+	matchMat = new MMRecord*[numExamples];
+	for (i=0; i < numExamples; i++) {
+		matchMat[i] = new MMRecord[examples[i].numPoints * MAX_MM_PTS];
+		if (!matchMat[i]) {
+			printf("WARNING: can't allocate %d records for match matrix %d!\n", examples[i].numPoints * MAX_MM_PTS, i);
+		}
+	}
+
+	// initialize variables
+	int index, cInd, pInd, tIndex;
+	curVars.zeroElements();
+	index = 0;
+	tIndex = 0;
+	templateVars.resize(cv->numPts * 3);
+	for (cInd = 0; cInd < numComponents+1; cInd++) {
+		for (i=0; i < cv->numPts; i++) {
+			for (pInd = 0; pInd < NUM_P_VALUES; pInd++) {
+				if (cInd > 0) {
+					curVars[index++] = boundedRand(-0.01, 0.01);
+					curVars[index++] = boundedRand(-0.01, 0.01);
+					curVars[index++] = boundedRand(-0.01, 0.01);
+				}
+				else {
+					curVars[index++] = cv->cvPts[i].pValues[pInd][0];
+					curVars[index++] = cv->cvPts[i].pValues[pInd][1];
+					curVars[index++] = cv->cvPts[i].pValues[pInd][2];
+					
+					templateVars[tIndex++] = cv->cvPts[i].pValues[pInd][0];
+					templateVars[tIndex++] = cv->cvPts[i].pValues[pInd][1];
+					templateVars[tIndex++] = cv->cvPts[i].pValues[pInd][2];
+				}
+			}
+		}
+	}
+/*	for (i=0; i < numExamples; i++) {
+		SkelTranslation *baseT = (SkelTranslation*)poses[i].transforms.getItem(0);
+		curVars[index++] = baseT->curVal[0];
+		curVars[index++] = baseT->curVal[1];
+		curVars[index++] = baseT->curVal[2];
+	}*/
+	if (index != curVars.size()) {
+			cout << "mismatched number of variables: expected " << index << "; actual " << curVars.size() << endl;
+	}
+	if (tIndex != cv->numPts * 3) {
+			cout << "mismatched number of template variables: expected " << (cv->numPts * 3) << "; actual " << tIndex << endl;
+	}
+}
+
+int CVGoalFunction::numObsPts() {
+	int ex, ret = 0;
+	for (ex = 0; ex < numExamples; ex++) {
+		ret += examples[ex].numPoints;
+	}
+	return ret;
+}
+
+void CVGoalFunction::runEM(int numIterations) {
+	int i;
+
+	if (solver != NULL) {
+		cout << "solver already running!" << endl;
+		return;
+	}
+
+	solver = (LBFGSSolver*)1;
+
+	for (i=0; i < numIterations; i++) {
+		distDeviation = lerp(0.1, 0.05, 1.0 * i / (numIterations-1.0));
+//		if (i == 0)
+//			matchDeviation = 0.1;
+//		else
+			matchDeviation = lerp(0.01, 0.1, 1.0 * i / (numIterations-1.0));
+
+		lockPose = true;
+/*		if (i < 2)
+			lockShape = true;
+		else
+*/			lockShape = false;
+
+		cout << "running E step " << i << endl;
+		baTimer();
+		eStep();
+		cout << "E-step time: " << baTimer() << endl;
+
+		cout << "normalizing..." << endl;
+		normalizeN();
+
+		cout << "running M step " << i << endl;
+		optimizeWb();
+
+		cv->updateTM(examples[numExamples-1].trans);
+		redrawVNow();
+		uiWait();
+
+//		if (solver->stopNow == true)
+//			break;
+		cout << "M-step time: " << baTimer() << endl;
+	}
+
+	solver = NULL;
+}
+
+void CVGoalFunction::constructCV(double *comps, int numComps, int ex) {
+	static int lastEx = 0;
+	if (ex < 0)
+		ex = lastEx;
+	else
+		lastEx = ex;
+
+	if (numComps > numComponents)
+		numComps = numComponents;
+
+	int cPt, pInd, i, comp;
+	int index = 0;
+	for (cPt = 0; cPt < cv->numPts; cPt++) {
+		for (pInd=0; pInd < NUM_P_VALUES; pInd++) {
+			Vec3d v;
+			for (i=0; i < 3; i++) {
+				// reconstruct from PCA weights
+				v[i] = curVars[index];
+				for (comp = 0; comp < numComps; comp++) {
+					v[i] += curVars[cv->numPts * 3 * NUM_P_VALUES * (comp+1) + index] * comps[comp];
+				}
+				index++;
+			}
+			cv->cvPts[cPt].pValues[pInd] = v;
+		}
+
+		cv->cvPts[cPt].calcLocalPos(examples[ex].dofs);
+	}
+}
+
+void CVGoalFunction::constructCV(int ex, bool forceUpdate) {
+	static int lastEx = -1;
+
+	if (!forceUpdate && (numComponents == 0 || ex == lastEx)) {
+		return;
+	}
+
+	lastEx = ex;
+
+	int cPt, pInd, i, comp;
+	int index = 0;
+	for (cPt = 0; cPt < cv->numPts; cPt++) {
+		for (pInd=0; pInd < NUM_P_VALUES; pInd++) {
+			Vec3d v;
+			for (i=0; i < 3; i++) {
+				// reconstruct from PCA weights
+				v[i] = curVars[index];
+				for (comp = 0; comp < numComponents; comp++) {
+					v[i] += curVars[cv->numPts * 3 * NUM_P_VALUES * (comp+1) + index] *
+						curN[examples[ex].charID * numComponents + comp];
+				}
+				index++;
+			}
+			cv->cvPts[cPt].pValues[pInd] = v;
+		}
+
+		cv->cvPts[cPt].calcLocalPos(examples[ex].dofs);
+	}
+}
+
+void CVGoalFunction::eStep() {
+	int ex, ePt, cPt, i, j;
+	double eFactor = -1.0 / (2.0 * distDeviation * distDeviation);
+	int sum;
+
+	static ANNpointArray pointArr = NULL;
+	static ANNidxArray pointInd = new int[MAX_MM_PTS];
+	static ANNdistArray dists = new double[MAX_MM_PTS];
+	baAssert(dists != NULL, "can't allocate distance array for ANN", false);
+
+	// clear old matches
+	for (i=0; i < cv->numPts; i++) {
+		matches[i].clear();
+	}
+	maxMatches = 0;
+
+	// (should actually iterate over each character...)
+	for (ex = 0; ex < numExamples; ex++) {
+		sum = 0;
+
+		// calculate current reconstruction
+		constructCV(ex);
+		cv->updateTM(examples[ex].trans);
+		for (i=0; i < numComponents; i++)
+			curN[ex*numComponents + i] = 0;
+
+		// copy points into ANN structure
+		if (pointArr == NULL)
+			pointArr = new ANNpoint[cv->tm->numPts()];
+		for (i=0; i < cv->tm->numPts(); i++) {
+			pointArr[i] = cv->tm->getPt(i).n;
+		}
+
+		// precompute KNN tree for this shape
+		ANNkd_tree *tree = new ANNkd_tree(pointArr, cv->tm->numPts(), 3);
+		baAssert(tree != NULL, "Unable to create ANN tree", true);
+
+		// iterate over all observed points
+		for (ePt = 0; ePt < examples[ex].numPoints; ePt++) {
+			Vec3d curVec = examples[ex].points[ePt];
+
+			// phase 1: calculate distribution of matches, given current n
+			tree->annkSearch(curVec.n, MAX_MM_PTS, pointInd, dists);
+			double total = 0;
+			for (i = 0; i < MAX_MM_PTS; i++) {
+				double v = exp(eFactor * dists[i]);
+				total += v;
+				matchMat[ex][ePt * MAX_MM_PTS + i].p = v;	
+				matchMat[ex][ePt * MAX_MM_PTS + i].cvPt = pointInd[i];
+				matchMat[ex][ePt * MAX_MM_PTS + i].ex = ex;
+				matchMat[ex][ePt * MAX_MM_PTS + i].exPt = ePt;
+			}
+			// normalize
+			if (total != 0)
+				for (i = 0; i < MAX_MM_PTS; i++) {
+					matchMat[ex][ePt * MAX_MM_PTS + i].p /= total;	
+					matches[pointInd[i]].push_back(&matchMat[ex][ePt * MAX_MM_PTS + i]);
+					if (matches[pointInd[i]].size() > maxMatches)
+						maxMatches = matches[pointInd[i]].size();
+				}
+			else
+				cout << "warning: total = 0; dists[0]=" << dists[0] << ", eFactor =" << eFactor << endl;
+
+			
+			// phase 2: calculate most likely n, given matching distribution
+			if (numComponents < 1)
+				continue;
+			for (i=0; i < MAX_MM_PTS; i++) {
+				Vec3d curAvg = getVarVec(-1, matchMat[ex][ePt * MAX_MM_PTS + i].cvPt, 0);
+				Vec3d curVLocal = examples[ex].iTrans[matchMat[ex][ePt * MAX_MM_PTS + i].cvPt] * curVec; //cv->cvPts[ePt].localPos;
+				Vec3d x = curVLocal - curAvg;
+				for (j=0; j < numComponents; j++) {
+					Vec3d curV = getVarVec(j, matchMat[ex][ePt * MAX_MM_PTS + i].cvPt, 0);
+					double f = x * curV * (1.0 / curV.length2());
+					if (!_finite(f))
+						continue;
+					x -= f * curV;
+					curN[ex*numComponents + j] += matchMat[ex][ePt * MAX_MM_PTS + i].p * f;
+				}
+			}
+			sum++;
+		}
+
+		baAssert(sum != 0, "warning: no points considered", false);
+		cout << "component values for character " << ex << ": ";
+		for (j=0; j < numComponents; j++) {
+			if (!_finite(curN[ex * numComponents + j]))
+				cout << "(BAD!!)";
+			curN[ex * numComponents + j] /= sum;
+			cout << curN[ex * numComponents + j] << " ";
+		}
+		cout << endl;
+
+		delete tree;
+	}
+}
+
+void CVGoalFunction::optimizeWb()  {
+	int ex, ePt, i, cTri, pInd, cInd, cPt, xyz, comp;
+	double distF = 1.0 / (sqrt(2.0) * distDeviation);
+	double matchF = 1.0 / (sqrt(2.0) * matchDeviation);
+
+	// calculate error at all matches
+	cout << "calculating error..." << endl;
+	constructCV(0, true);
+	for (ex = 0; ex < numExamples; ex++) {
+		constructCV(ex);
+
+		// -log p(s_i | m_j, T)
+		for (ePt = 0; ePt < examples[ex].numPoints; ePt++) {
+			Vec3d curVec = examples[ex].points[ePt];
+
+			for (i = 0; i < MAX_MM_PTS; i++) {
+				MMRecord *mm = &matchMat[ex][ePt * MAX_MM_PTS + i];
+				Vec3d modelVec = cv->cvPts[mm->cvPt].localPos;
+				Vec3d localTM = examples[ex].iTrans[mm->cvPt] * curVec;
+				double A_ij = matchMat[ex][ePt * MAX_MM_PTS + i].p;
+
+				mm->weight = distF * sqrt(A_ij);
+				mm->err = mm->weight * (localTM - modelVec);
+			}
+		}
+	}
+
+	// for each charVec point, move to the optimal position
+	cout << "optimizing..." << endl;
+	int numFuncs, maxFuncs = maxMatches + 10 * (numComponents+1);
+	double *jac = new double[(numComponents+1)*maxFuncs];
+	double *hessian = new double[(numComponents+1)*(numComponents+1)];
+	double *gradient = new double[maxFuncs];
+	double *vars = new double[numComponents+1];
+	double *residual = new double[maxFuncs];
+	curGrad = curVars;  // we'll co-opt curGrad to store the new values
+	for (cPt = 0; cPt < cv->numPts; cPt++) {
+		Vec3d *color = &cv->tm->getPtColor(cPt);
+		*color = Vec3d();
+
+		int numInf = matches[cPt].size();
+		if (numInf < 1) {
+//			continue;
+			*color = Vec3d(1, 0, 1);
+		}
+		*color = Vec3d(0.8, 0.8, 0.8);
+
+		for (xyz=0; xyz < 3; xyz++) {
+			// calculate jacobian
+			memset(jac, 0, sizeof(double)*maxFuncs*(numComponents+1));
+			numFuncs = 0;
+			for (i = 0; i < numInf; i++) {
+				MMRecord *curMatch = matches[cPt][i];
+
+				for (comp = 0; comp < numComponents+1; comp++) {
+					if (comp == 0)
+						jac[numFuncs*(numComponents+1) + comp] = -curMatch->weight;
+					else
+						jac[numFuncs*(numComponents+1) + comp] = -curMatch->weight * curN[comp-1];
+				}
+				residual[numFuncs] = matches[cPt][i]->err[xyz];
+
+				numFuncs++;
+			}
+			for (i = 0; i < cv->neighbors[cPt].size(); i++) {
+				int neigh = cv->neighbors[cPt][i];
+
+				for (comp = 0; comp < numComponents+1; comp++) {
+					jac[numFuncs*(numComponents+1) + comp] = -matchF;
+
+					double dist;
+					int nInd = getIndex(comp-1, neigh, 0)+xyz;
+					int ind = getIndex(comp-1, cPt, 0)+xyz;
+					if (i == 0)
+						dist = (curVars[nInd] - curVars[ind]);
+					else
+						dist = ((curVars[nInd] - templateVars[nInd]) - (curVars[ind] - templateVars[ind]));
+					residual[numFuncs] = matchF * dist;
+
+					numFuncs++;
+				}
+			}
+
+			// hessian = jac' * jac; gradient = jac' * residual
+			for (comp = 0; comp < numComponents+1; comp++) {
+				double sum = 0;
+
+				for (i = 0; i < numFuncs; i++) {
+					sum += jac[i*(numComponents+1) + comp] * residual[i];
+				}
+				gradient[comp] = sum;
+
+				int comp2;
+				for (comp2 = 0; comp2 < numComponents+1; comp2++) {
+					sum = 0;
+					for (i = 0; i < numFuncs; i++) {
+						sum += jac[i*(numComponents+1) + comp] * jac[i*(numComponents+1) + comp2];
+					}
+					hessian[comp*(numComponents+1) + comp2] = sum;
+				}
+			}
+
+			conjGradSolver(hessian, gradient, (numComponents+1), vars);
+			// add delta into solution
+			for (i = 0; i < numComponents+1; i++) {
+				int index = getIndex(i-1, cPt, 0) + xyz;
+				curGrad[index] += vars[i];
+//				(*color)[xyz] += min(vars[i] / 0.01, 1.0);
+			}
+
+//			cv->tm->getPtColor(cPt) = Vec3d(1, 0, 1);
+		}
+	}
+	curVars = curGrad;
+	delete []gradient;
+	delete []hessian;
+	delete []jac;
+	delete []vars;
+	delete []residual;
+}
+
+void CVGoalFunction::normalizeN()  {
+	int comp, ex, i;
+	double sum, sum2;
+
+	if (numExamples < 1)
+		return;
+
+	int compSize = cv->numPts * NUM_P_VALUES * 3;
+
+	for (comp = 0; comp < numComponents; comp++) {
+		// calculate standard deviation of n_comp
+		sum = 0;
+		sum2 = 0;
+		for (ex = 0; ex < numExamples; ex++) {
+			sum += curN[ex * numComponents + comp];
+			sum2 += sqr(curN[ex * numComponents + comp]);
+		}
+
+		if (sum2 < 1e-6)
+			continue;
+
+		double avg = sum / numExamples;
+		double var = sqrt((1.0 / numExamples) * (sum2 - (2.0 / numExamples) * sum * sum + sqr(avg)));
+		if (var < 1e-6 || !_finite(var))
+			continue;
+
+		// center
+		for (i=0; i < compSize; i++) {
+			curVars[i] += curVars[(comp+1)*compSize + i] * avg;
+		}
+		// fix N
+		for (ex = 0; ex < numExamples; ex++) {
+			curN[ex * numComponents + comp] -= avg;
+			curN[ex * numComponents + comp] /= var;
+		}
+		// scale
+		for (i=0; i < compSize; i++) {
+			curVars[(comp+1)*compSize + i] *= var;
+		}
+	}
+}

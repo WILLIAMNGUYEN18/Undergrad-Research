@@ -1,0 +1,10 @@
+partBuildPCA data/parts/part-f-hips.dat baseQ
+partBuildPCA data/parts/part-f-abdomen.dat waistQ
+partBuildPCA data/parts/part-f-chest.dat abdomenQ lClavicleXR rClavicleXR
+partBuildPCA data/parts/part-f-lUArm.dat lShoulderXR lShoulderYR lShoulderHalfYR
+partBuildPCA data/parts/part-f-lLArm.dat lElbowA lForearmA lForearmHalfA
+partBuildPCA data/parts/part-f-lHand.dat lWristA
+partBuildPCA data/parts/part-f-lULeg.dat lHipQ
+partBuildPCA data/parts/part-f-lLLeg.dat lKneeA
+partBuildPCA data/parts/part-f-lFoot.dat lAnkleA
+partBuildPCA data/parts/part-f-neckR.dat neckR

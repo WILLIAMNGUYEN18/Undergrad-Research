@@ -1,0 +1,136 @@
+set POSE A
+set POSEID 0
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 0 1 100 20
+cvRunSurfaceMatch 1 1 10 20
+cvRunSurfaceMatch 10 1 5 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+cvSetLocalFromTM
+cvSaveLocal data/examples/{ID}_local.dat
+
+set POSE D
+set POSEID 1
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE E
+set POSEID 2
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE F
+set POSEID 3
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE G
+set POSEID 4
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE H
+set POSEID 5
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE I
+set POSEID 6
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE J
+set POSEID 7
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE K
+set POSEID 8
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE L
+set POSEID 9
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE M
+set POSEID 10
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE N
+set POSEID 11
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE O
+set POSEID 12
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE P
+set POSEID 13
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE Q
+set POSEID 14
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE R
+set POSEID 15
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE S
+set POSEID 16
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/{ID}_{POSE}.ex

@@ -1,0 +1,6 @@
+cvInitSurfaceMatch {POSEID} data/csr/csr{CSR}a.lnd data/mrefs-50k.txt
+cvLoadDisp data/csr/csr{CSR}a.disp data/map-10k-50k.dat
+cvLoadTexture data/lock-50k.disp
+cvRunSurfaceMatch 1 1 5 20
+cvRunSurfaceMatch 10 1 1 20
+cvSaveExample {POSEID} data/examples/csr{CSR}a.ex

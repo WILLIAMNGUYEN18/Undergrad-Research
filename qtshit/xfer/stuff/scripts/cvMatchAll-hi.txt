@@ -1,0 +1,158 @@
+cvLoadNeighWeights data/bend-hi.tex
+cvLoadTexture data/lock-50k.disp
+
+//set POSE A
+//set POSEID 0
+//cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+//cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+//cvRunSurfaceMatch 1 0.1 10 20
+//cvRunSurfaceMatch 10 0.1 5 20
+//cvSaveExample {POSEID}
+//cvSetLocalFromTM
+//cvSaveLocal data/examples/{ID}_local-hi.dat
+
+
+set POSE D
+set POSEID 1
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE E
+set POSEID 2
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE F
+set POSEID 3
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE G
+set POSEID 4
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE H
+set POSEID 5
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE I
+set POSEID 6
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE J
+set POSEID 7
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE K
+set POSEID 8
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE L
+set POSEID 9
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE M
+set POSEID 10
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE N
+set POSEID 11
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE O
+set POSEID 12
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE P
+set POSEID 13
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE Q
+set POSEID 14
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE R
+set POSEID 15
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+//cvLoadLocal data/examples/{ID}_local-hi.dat
+set POSE S
+set POSEID 16
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-50k.txt
+cvLoadDisp data/examples/{ID}_{POSE}.disp data/map-10k-50k.dat
+cvRunSurfaceMatch 1 0.1 5 20
+cvRunSurfaceMatch 10 0.1 1 20
+cvSaveExample {POSEID}
+
+// done!

@@ -1,0 +1,156 @@
+
+set POSE A
+set POSEID 0
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+//cvSaveDisp data/examples/{ID}_{POSE}.disp
+cvSaveExample {POSEID}
+//cvSetLocalFromTM
+//cvSaveLocal data/examples/{ID}_local.dat
+
+//cvLoadLocal data/examples/{ID}_local.dat
+set POSE D
+set POSEID 1
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE E
+set POSEID 2
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+cvLoadLocal data/examples/{ID}_local.dat
+set POSE F
+set POSEID 3
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE G
+set POSEID 4
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE H
+set POSEID 5
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE I
+set POSEID 6
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE J
+set POSEID 7
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE K
+set POSEID 8
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE L
+set POSEID 9
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE M
+set POSEID 10
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE N
+set POSEID 11
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE O
+set POSEID 12
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE P
+set POSEID 13
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE Q
+set POSEID 14
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE R
+set POSEID 15
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+set POSE S
+set POSEID 16
+cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-{RES}.txt
+cvEdgeMatchSolve 10000 10 0.01 10 25
+cvEdgeMatchSolve 1000 100 0.01 1 25
+cvEdgeMatchSolve 10000 0.1 10 1 25
+cvSaveDisp data/examples/{ID}_{POSE}-{RES}.disp
+cvSaveExample {POSEID}
+
+// done!

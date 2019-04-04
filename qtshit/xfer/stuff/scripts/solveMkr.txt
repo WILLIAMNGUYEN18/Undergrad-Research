@@ -1,0 +1,6 @@
+uLoadCurPose data/skels/{ID}a.po.txt
+uPoseToEx 0
+uDressFromEx 0
+uStartSolver 132 10
+uStartSolver 133 2000
+!savePoses

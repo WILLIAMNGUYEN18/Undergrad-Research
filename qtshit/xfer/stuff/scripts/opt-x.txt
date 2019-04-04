@@ -1,0 +1,44 @@
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat
+uStartSolver dp 4
+uStartSolver x 4
+uRenormalizeX
+uSaveSolve data/solve-md6.dat

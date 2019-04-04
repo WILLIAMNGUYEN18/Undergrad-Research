@@ -1,0 +1,52 @@
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 10
+uStartSolver m 10
+uSaveSolve data/solve4.dat
+uStartSolver n 20
+uStartSolver m 20
+uSaveSolve data/solve4.dat
+uStartSolver n 20
+uStartSolver m 20
+uSaveSolve data/solve4.dat
+uStartSolver n 20
+uStartSolver m 20
+uSaveSolve data/solve4.dat
+uStartSolver n 20
+uStartSolver m 20
+uSaveSolve data/solve4.dat
+uStartSolver n 20
+uStartSolver m 20
+uSaveSolve data/solve4.dat
+uStartSolver n 20
+uStartSolver m 20
+uSaveSolve data/solve4.dat
+uStartSolver n 40
+uStartSolver m 40
+uSaveSolve data/solve4.dat
+uStartSolver n 40
+uStartSolver m 40
+uSaveSolve data/solve4.dat
+!optNM

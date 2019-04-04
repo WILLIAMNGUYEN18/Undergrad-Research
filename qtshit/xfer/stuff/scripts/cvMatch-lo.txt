@@ -1,0 +1,29 @@
+scInitSCMesh data/half-james-10k.ply
+scCalcTransInfluences
+scUpdateLocal
+
+cvInitFromSkin 1
+cvAutoUpdate
+set ID 2
+cvBuildExampleSet data/set-{ID}-lo.txt
+//cvBuildExampleSet data/set-temp.txt
+
+cvLoadTexture data/lock-10k.disp
+
+//scSaveSkin auto.skin
+//scLoadSkin auto.skin
+
+set POSE A
+set POSEID 0
+cvInitSurfaceMatch {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-10k.txt
+//cvLoadNeighWeights data/bend.tex
+//cvRunSurfaceMatch 1 0.01 5 100
+//cvRunSurfaceMatch 10 1 1 20
+//cvEdgeMatchInit {POSEID} ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-10k.txt
+//clothInit
+//cvEdgeMatchMangle 2
+//cvEdgeMatchMangle 0 1 1 0.6
+//cvEdgeMatchMangle 1 0.05
+//cvEdgeMatchSolve 0 0 1 0 20
+//cvSkinMatchInit ../posedata/ply/{ID}_{POSE}.mkr data/mrefs-10k.txt
+//cvSkinMatchSolve 1 1 5 20

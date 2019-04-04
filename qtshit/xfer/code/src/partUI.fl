@@ -1,0 +1,99 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0103 
+header_name {.h} 
+code_name {.cxx}
+decl {\#include "doppel2.h"} {} 
+
+decl {\#include "cli.h"} {} 
+
+decl {\#include "skeleton.h"} {} 
+
+decl {\#include "skinCalc.h"} {} 
+
+decl {\#include "partMaster.h"} {public
+} 
+
+decl {\#include "trimesh.h"} {} 
+
+decl {\#include "uMaster.h"} {} 
+
+class PartUI {open : {public Tool}
+} {
+  Function {PartUI()} {open
+  } {
+    Fl_Window partWindow {
+      label Parts open selected
+      xywh {577 166 380 377}
+      code0 {\#include "tool.h"}
+      code1 {\#include "Fl/fl_file_chooser.h"} visible
+    } {
+      Fl_Check_Button partCB {
+        label {Show part}
+        callback {showPart = partCB->value();
+redrawV();}
+        xywh {10 5 25 25} down_box DOWN_BOX
+      }
+      Fl_Value_Slider compVS0 {
+        label {Component 0:}
+        callback {updateFromSliders();}
+        xywh {15 65 355 25} type {Horz Knob} align 5 minimum -2 maximum 2
+      }
+      Fl_Value_Slider compVS1 {
+        label {Component 1:}
+        callback {updateFromSliders();}
+        xywh {15 105 355 25} type {Horz Knob} align 5 minimum -2 maximum 2
+      }
+      Fl_Value_Slider compVS2 {
+        label {Component 2:}
+        callback {updateFromSliders();}
+        xywh {15 145 355 25} type {Horz Knob} align 5 minimum -2 maximum 2
+      }
+      Fl_Value_Slider compVS3 {
+        label {Component 3:}
+        callback {updateFromSliders();}
+        xywh {15 185 355 25} type {Horz Knob} align 5 minimum -2 maximum 2
+      }
+      Fl_Value_Slider compVS4 {
+        label {Component 4:}
+        callback {updateFromSliders();}
+        xywh {15 225 355 25} type {Horz Knob} align 5 minimum -2 maximum 2
+      }
+      Fl_Button {} {
+        label {Load target mesh...}
+        callback {char *fname = fl_file_chooser("Load mesh",
+ "*.{ply,obj}",
+ NULL);
+if (fname != NULL)
+ loadTargetMesh(fname);}
+        xywh {120 280 135 25}
+      }
+      Fl_Check_Button targetCB {
+        label {Show target}
+        callback {showTarget = targetCB->value();
+redrawV();}
+        xywh {15 280 25 25} down_box DOWN_BOX
+      }
+    }
+    code {name="Parts";} {}
+    Fl_Window skelWindow {
+      label Skels open
+      xywh {237 154 1039 373} hide
+    } {}
+  }
+  Function {show()} {open
+  } {
+    code {partWindow->show();} {}
+  }
+  Function {updateFromSliders()} {open return_type void
+  } {
+    code {double vals[5];
+vals[0] = compVS0->value();
+vals[1] = compVS1->value();
+vals[2] = compVS2->value();
+vals[3] = compVS3->value();
+vals[4] = compVS4->value();
+updatePartWeights(vals, 5);} {}
+  }
+  decl {virtual void drawGL();} {public
+  }
+} 

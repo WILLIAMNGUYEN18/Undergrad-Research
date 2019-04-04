@@ -1,0 +1,7 @@
+//clothInit data/strip.ply data/strip2.ply
+//clothInit data/cube10.ply
+//clothInit data/triangle2.ply
+clothInit data/2a.ply
+//clothInit data/pig1850.ply
+//clothMangle 0 1.5 1.5 1.5
+clothMarkers data/mrefs-10k.txt ../posedata/ply/2_D.mkr

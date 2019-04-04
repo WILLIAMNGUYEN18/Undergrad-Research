@@ -1,0 +1,722 @@
+// skinCalc.cpp
+
+#include "ba.h"
+#include "skinCalc.h"
+#include "skeleton.h"
+#include "trimesh.h"
+#include "trimesh_util.h"
+#include <list>
+
+Vec3d *examplePoints;
+Skeleton *matchSkel = NULL;
+double *exampleDofs;
+int numFrames, numDofs, numHandles;
+vector<double> *infWeights;
+vector<int> *infTrans;
+
+TriMesh *scMesh;
+Skeleton *scSkel;
+Skin scSkin;
+
+SkinCalcPt::SkinCalcPt() {
+	free(false);
+}
+
+SkinCalcPt::~SkinCalcPt() {
+	free();
+}
+
+void SkinCalcPt::free(bool delFirst) {
+	if (delFirst) {
+		if (bones)
+			delete []bones;
+		if (weights)
+			delete []weights;
+
+		if (tTransforms)
+			delete []tTransforms;
+		if (tWeights)
+			delete []tWeights;
+		if (tPositions)
+			delete []tPositions;
+	}
+	numBones = 0;
+	bones = NULL;
+	weights = NULL;
+
+	tTransforms = NULL;
+	tWeights = NULL;
+	tPositions = NULL;
+}
+
+void SkinCalcPt::init(int iNumBones) {
+	numBones = iNumBones;
+	bones = new int[numBones];
+	weights = new double[12*numBones];
+}
+
+void SkinCalcPt::initTrans(int iNumTInf) {
+	numTInf = iNumTInf;
+	tTransforms = new int[numTInf];
+	tWeights = new double[numTInf];
+	tPositions = new double[numTInf];
+}
+
+void SkinCalcPt::updateLocalFrame(Skeleton *skel) {
+	/*
+	int i, j, index = 0;
+	localFrame *= 0;
+	for (i=0; i < numBones; i++) {
+		for (j=0; j < 12; j++) {
+			Mat4d m = skel->transforms.getT(bones[i])->globalCoord.mat;
+			localFrame.n[j] += weights[index++] * m.n[j];
+		}
+	}
+	localFrame.n[15] = 1;
+	*/
+
+	int i, j;
+	Vec3d trans;
+	QuatNorm q;
+	double weightSoFar = 0;
+	for (i=0; i < numTInf; i++) {
+		if (tWeights[i] == 0)
+			continue;
+
+		SkelTransform *t = skel->transforms.getT(tTransforms[i]);
+		Vec3d pos = t->globalCoord.mat * (-t->curCoord.v * (1.0 - tPositions[i]));
+		trans += pos * tWeights[i];
+//		trans = pos;
+
+		if (weightSoFar == 0)
+			q = t->globalCoord.q;
+		else {
+			q = slerp(q, t->globalCoord.q, 1.0 - weightSoFar / (weightSoFar + tWeights[i]));
+		}
+		weightSoFar += tWeights[i];
+	}
+	localFrame = Mat4d();
+	localFrame = q.toMatrixD();
+	localFrame[0][3] = trans[0];
+	localFrame[1][3] = trans[1];
+	localFrame[2][3] = trans[2];
+}
+
+void SkinCalcPt::updateLoadPos(Vec3d globalPos) {
+	Mat4d m = localFrame.inverse();
+	localPos = m * globalPos;
+//	localPos *= 0.1;
+//	localPos = Vec3d(); //boundedRand(-0.01,0.01),boundedRand(-0.01,0.01),boundedRand(-0.01,0.01));
+}
+
+double SkinCalcPt::getTransWeight(int t) {
+	double ret = 0;
+	int i;
+	for (i=0; i < numTInf; i++) {
+		if (tTransforms[i] == t) {
+			ret = tWeights[i];
+			break;
+		}
+	}
+	return ret;
+}
+
+void Skin::init(int iNumPts) {
+	numPts = iNumPts;
+	points = new SkinCalcPt[numPts];
+}
+
+void Skin::updateLocalFrames() {
+	int i;
+	for (i=0; i < numPts; i++) {
+		points[i].updateLocalFrame(skel);
+	}
+}
+
+void Skin::updateLocalPos(TriMesh *tm) {
+	int i;
+	if (!baAssert(tm->numPts() == numPts, "Skin::updateLocalPos mismatched number of points", false))
+		return;
+	for (i=0; i < numPts; i++) {
+		points[i].updateLoadPos(tm->getPt(i));
+	}
+}
+
+void Skin::updateMesh(TriMesh *tm) {
+	int i;
+	if (!baAssert(tm->numPts() == numPts, "Skin::updateLocalPos mismatched number of points", false))
+		return;
+	for (i=0; i < numPts; i++) {
+		tm->getPt(i) = points[i].localFrame * points[i].localPos;
+	}
+	tm->calcNormals();
+}
+/*
+void Skin::load(char *fname) {
+	ifstream in;
+	int i, j, n;
+	char s[80];
+
+	if (!openIFStream(&in, fname, "skin"))
+		return;
+
+	in >> n;
+	init(n+5);
+	skel = matchSkel;
+
+	for (i=0; i < 2; i++) {
+		in >> n;
+		points[i].init(n);
+		for (j=0; j < 3; j++) {
+			in >> s;
+			points[i].bones[j] = skel->transforms.lookupName(s);
+		}
+		for (j=0; j < 12*n; j++)
+			in >> points[i].weights[j];
+	}
+
+	// test points
+	for (; i < numPts; i++) {
+		points[i].init(3);
+		for (j=0; j < 3; j++) {
+			points[i].bones[j] = points[0].bones[j];
+		}
+		double w = (i-1)/6.0;
+		for (j=0; j < 12*3; j++) {
+			points[i].weights[j] = (1.0-w) * points[0].weights[j] + w * points[1].weights[j];
+		}
+	}
+}
+*/
+void Skin::renderPoints() {
+	int i;
+	for (i=0; i < numPts; i++) {
+		points[i].updateLocalFrame(skel);
+		Vec3d pt = points[i].localFrame * Vec3d(1,1,1);
+		glColor3f(1, 1, 0);
+		glbSphere(pt, 0.01, 10);
+	}
+}
+
+void Skin::load(char *fname) {
+}
+
+void Skin::save(char *fname) {
+}
+
+void loadMarkerAnalysis(char *path, char *maFName) {
+	int i, j, k, totalFrames, stride, index = 0;
+	ifstream info;
+	char str[1024], skelFN[80], markerFN[80], infFN[80], dofFN[80], *s;
+	int numMarkers, firstFrame, lastFrame, *mhMapping;
+	Vec3d v;
+
+	// load info file
+	sprintf(str, "%s%s", path, maFName);
+	if (!openIFStream(&info, str, "Marker analysis")) {
+		return;
+	}
+	info >> skelFN >> markerFN >> infFN >> dofFN;
+	info >> numMarkers >> numHandles >> stride;
+	info >> firstFrame >> lastFrame;
+	mhMapping = new int[numMarkers];
+	for (i=0; i < numMarkers; i++)
+		mhMapping[i] = -1;
+	while (info.good()) {
+        info.getline(str, 1024);
+		if (strlen(str) < 2)
+			continue;
+		i = atoi(strtok(str, ","));
+		mhMapping[i] = atoi(strtok(NULL, ","));
+	}
+	info.close();
+
+	// load skeleton
+	sprintf(str, "%s%s", path, skelFN);
+	matchSkel = Skeleton::load(str);
+
+	// load marker data file
+	sprintf(str, "%s%s", path, markerFN);
+	if (!openIFStream(&info, str, "Marker file"))
+		return;
+	examplePoints = new Vec3d[numHandles * (lastFrame-firstFrame)];
+	memset(examplePoints, 0, sizeof(Vec3d) * numHandles * (lastFrame-firstFrame));
+	info.getline(str, 1024);
+	strtok(str, "=");
+	i = atoi(strtok(NULL, "="));
+	if (i != numMarkers) {
+		cout << "mismatch in number of markers in marker file; expected " << numMarkers << "; found " << i << endl;
+		return;
+	}
+	info.getline(str, 1024);
+	strtok(str, "=");
+	totalFrames = atoi(strtok(NULL, "="));
+	for (i=0; i < totalFrames; i++) {
+		info.getline(str, 1024);
+		info.getline(str, 1024);
+		for (j=0; j < numMarkers; j++) {
+			info >> k;
+			if (k != j+1) {
+				cout << "glitch reading marker file frame " << i << ": expected marker index " << (j+1) << "; got " << k << endl;
+				return;
+			}
+			info >> v[0] >> v[1] >> v[2];
+			if ((i % stride) == 0 && (i/stride) >= firstFrame && (i/stride) < lastFrame && mhMapping[j] > -1) {
+				v *= 0.001;
+				swap(v.n[1], v.n[2]);
+				swap(v.n[0], v.n[2]);
+				examplePoints[(i/stride - firstFrame) * numHandles + mhMapping[j]] = v;
+			}
+		}
+		info.getline(str, 1024);
+	}
+	info.close();
+
+	// load influence map
+	sprintf(str, "%s%s", path, infFN);
+	if (!openIFStream(&info, str, "DOF file"))
+		return;
+	infWeights = new vector<double>[numMarkers];
+	infTrans = new vector<int>[numMarkers];
+	while (1) {
+		info >> i;
+		if (i < 0 || !info.good())
+			break;
+		info >> j;
+		for (k = 0; k < j; k++) {
+			double weight;
+			info >> weight;
+			info >> str;
+			int trans = matchSkel->transforms.lookupName(str);
+			if (trans < 0) {
+				cout << "unknown transform: " << str << endl;
+				trans = 0;
+			}
+			infWeights[i].push_back(weight);
+			infTrans[i].push_back(trans);
+		}
+	}
+	info.close();
+
+	// load dofs
+	sprintf(str, "%s%s", path, dofFN);
+	if (!openIFStream(&info, str, "DOF file"))
+		return;
+    info.getline(str, 1024);
+	strtok(str, " ");
+	strtok(NULL, " ");
+	totalFrames = atoi(strtok(NULL, " "));
+	strtok(NULL, " ");
+	strtok(NULL, " ");
+	numDofs = atoi(strtok(NULL, " "));
+	cout << totalFrames << " frames; " << numDofs << " dofs" << endl;
+	numFrames = lastFrame - firstFrame;
+	exampleDofs = new double[numDofs * numFrames];
+	info.getline(str, 1024); // dof names...
+	for (i=0; i < totalFrames; i++) {
+		for (j=0; j < numDofs; j++) {
+			double d;
+			info >> d;
+			if (i >= firstFrame && i < lastFrame)
+				exampleDofs[index++] = d;
+		}
+	}
+
+	delete []mhMapping;
+
+	setMatchSkelFrame(10);
+}
+
+void setMatchSkelFrame(int f) {
+	if (!matchSkel)
+		return;
+
+	int ofs = numDofs * f;
+	matchSkel->transforms.getT("pelvis_trans")->loadDofs(exampleDofs + ofs + 0);
+	matchSkel->transforms.getT("pelvis_quat")->loadDofs(exampleDofs + ofs + 3);
+
+	matchSkel->transforms.getT("l_thigh_quat")->loadDofs(exampleDofs + ofs + 7);
+	matchSkel->transforms.getT("l_knee_euler_z")->loadDofs(exampleDofs + ofs + 11);
+	matchSkel->transforms.getT("l_ankle_euler_z")->loadDofs(exampleDofs + ofs + 12);
+
+	matchSkel->transforms.getT("r_thigh_quat")->loadDofs(exampleDofs + ofs + 13);
+	matchSkel->transforms.getT("r_knee_euler_z")->loadDofs(exampleDofs + ofs + 17);
+	matchSkel->transforms.getT("r_ankle_euler_z")->loadDofs(exampleDofs + ofs + 18);
+
+	matchSkel->transforms.getT("abdomen_euler_x")->loadDofs(exampleDofs + ofs + 19);
+	matchSkel->transforms.getT("abdomen_euler_x")->loadDofs(exampleDofs + ofs + 20);
+
+	matchSkel->transforms.getT("spine_euler_y")->loadDofs(exampleDofs + ofs + 21);
+	matchSkel->transforms.getT("head_quat")->loadDofs(exampleDofs + ofs + 22);
+
+	double angle = exampleDofs[ofs + 26] - 0.9423;
+	matchSkel->transforms.getT("l_scapula_euler_x")->loadDofs(&angle);
+	matchSkel->transforms.getT("l_bicep_quat")->loadDofs(exampleDofs + ofs + 27);
+	matchSkel->transforms.getT("l_elbow_euler_z")->loadDofs(exampleDofs + ofs + 31);
+	matchSkel->transforms.getT("l_wrist_euler_x")->loadDofs(exampleDofs + ofs + 32);
+
+	angle = exampleDofs[ofs + 33] + 0.9423;
+	matchSkel->transforms.getT("r_scapula_euler_x")->loadDofs(&angle);
+	matchSkel->transforms.getT("r_bicep_quat")->loadDofs(exampleDofs + ofs + 34);
+	matchSkel->transforms.getT("r_elbow_euler_z")->loadDofs(exampleDofs + ofs + 38);
+	matchSkel->transforms.getT("r_wrist_euler_x")->loadDofs(exampleDofs + ofs + 39);
+
+//	Vec3d v(0.0000, -0.4018 * ((f+1) / 10.0), 0.0000);
+//	matchSkel->transforms.getT("l_thigh_len")->loadDofs(v.n);
+
+	matchSkel->updateCoords();
+}
+
+void renderMarkers(int frame) {
+	int i, ofs = numHandles * frame;
+	glColor3f(1, 1, 1);
+	for (i=0; i < numHandles; i++) {
+		glbSphere(examplePoints[ofs+i], 0.01);
+	}
+}
+
+void saveSkelMatrices() {
+	int hIndex, xyz, frame, joint;
+	char fName[80];
+	ofstream out, pOut;
+
+	for (hIndex = 0; hIndex < numHandles; hIndex++) {
+		if (infTrans[hIndex].size() < 2)
+			continue;
+
+		for (xyz = 0; xyz < 3; xyz++) {
+			sprintf(fName, "data/skinmats/mat%04d-%d.txt", hIndex, xyz);
+			if (!openOFStream(&out, fName, "matrix file"))
+				return;
+			sprintf(fName, "data/skinmats/vec%04d-%d.txt", hIndex, xyz);
+			if (!openOFStream(&pOut, fName, "vector file"))
+				return;
+
+			for (frame=0; frame < numFrames; frame++) {
+				setMatchSkelFrame(frame);
+
+				for (joint = 0; joint < infTrans[hIndex].size(); joint++) {
+					Mat4d m = matchSkel->transforms.getT(infTrans[hIndex][joint])->globalCoord.mat;
+					out << m[xyz][0] << " " << m[xyz][1] << " " << m[xyz][2] << " " << m[xyz][3] << " ";
+				}
+				out << endl;
+
+				pOut << examplePoints[frame * numHandles + hIndex][xyz] << endl;
+			}
+	
+			out.close();
+			pOut.close();
+		}
+	}
+}
+
+void meshKNNInterp(TriMesh *tm, int numPts, int *ptIndices) {
+	double *dists = new double[tm->numPts() * numPts];
+	
+	vector<int> *neighbors = findTMNeighbors(tm);
+
+	int pt, tPt, i;
+	int ofs;
+
+	for (pt=0; pt < numPts; pt++) {
+		ofs = pt*tm->numPts();
+
+		for (tPt=0; tPt < tm->numPts(); tPt++)
+			dists[ofs + tPt] = 1e6;
+
+		list <int> toSearch;
+		list <int> toSearchD;
+		toSearch.push_back(0);
+		toSearchD.push_back(0);
+
+		while (toSearch.size() > 0) {
+			int curPt = toSearch.front();
+			double curDist = toSearchD.front();
+			toSearch.pop_front();
+			toSearchD.pop_front();
+
+			if (curDist < dists[ofs + curPt]) {
+				dists[ofs + curPt] = curDist;
+
+				Vec3d curV = tm->getPt(curPt);
+				int neig;
+				for (i = 0; i < neighbors[curPt].size(); i++) {
+					toSearch.push_back(neighbors[curPt][i]);
+					Vec3d neighV = tm->getPt(neighbors[curPt][i]);
+					toSearchD.push_back(curDist + (curV - neighV).length());
+				}
+			}
+		}
+	}
+
+	delete []dists;
+}
+
+#include "markers.h" 
+
+void initSCMesh(char *fname) {
+	scMesh = new TriMesh();
+
+	/*
+	MarkerSet *markers = new MarkerSet();
+	markers->loadText("../doppel/james-data2/james-markers.txt");
+	int i;
+	ofstream f("../doppel/james-data2/james-new-markers.txt");
+	f << markers->numMarkers << endl;
+	Mat4d m(0.70488, 0.705371, 0.0748014, -0.086281, 
+			-0.705544, 0.708088, -0.0286237, 0.0099844,
+			-0.0731563, -0.0325995, 0.996788, 0.110465,
+			0, 0, 0, 1);
+//	m = m.inverse();
+	for (i=0; i < markers->numMarkers; i++) {
+		f << (vec4to3(m * vec3to4(markers->markers[i].pos)))	<< endl;
+	}
+	f.close();
+	exit(0);*/
+
+	if (strncmp(fname, "data/half", 9) == 0) {
+		// mirror loaded surface
+		scMesh->loadFile(fname);
+		int n = scMesh->numPts();
+		int *mirrorVert = new int[n];
+		int i;
+		for (i=0; i < n; i++) {
+			Vec3d &v = scMesh->getPt(i); 
+			swap(v[1], v[2]);
+			swap(v[0], v[1]);
+			v[2] -= 1.0;
+			v[0] = -v[0];
+			v[1] = -v[1];
+			if (fabs(v[1]) < 0.0001) {
+				mirrorVert[i] = i;
+			}
+			else {
+				mirrorVert[i] = scMesh->numPts();
+				scMesh->addPoint(Vec3d(v[0], -v[1], v[2]));
+			}
+		}
+		n = scMesh->numTris();
+		for (i=0; i < n; i++) {
+			scMesh->addTri(
+				mirrorVert[scMesh->getTri(i, 0)], 
+				mirrorVert[scMesh->getTri(i, 2)], 
+				mirrorVert[scMesh->getTri(i, 1)]);
+		}
+
+		scMesh->savePly("test.ply");
+//		scMesh->alpha = 0.5;
+
+//		matchSkel = Skeleton::load("data/james.sk.txt");
+		scSkel = Skeleton::load("data/james.sk.txt");
+	}
+	else {
+		scMesh->loadFile(fname);
+		scSkel = Skeleton::load("data/body.sk.txt");
+		ifstream in;
+		if (!openIFStream(&in, "data/james.po.txt", "James pose"))
+			return;
+		scSkel->loadPose(in);
+		in.close();
+	}
+	scMesh->calcNormals();
+
+	scSkin.init(scMesh->numPts());
+	scSkin.skel = scSkel;
+}
+
+static double *siTemp;
+static int siSkelSize;
+static vector<int> *siNeighbors;
+
+void smoothSurfRecurse(double depth, int index, int frame) {
+	int tInd = index * siSkelSize + frame;
+	if (siTemp[tInd] >= depth)
+		return;
+
+	siTemp[tInd] = depth;
+
+	int i;
+	double newDepth;
+	for (i=0; i < siNeighbors[index].size(); i++) {
+		int n = siNeighbors[index][i];
+
+		if (n < 0)
+			return;
+
+		newDepth = depth - (scMesh->getPt(index) - scMesh->getPt(n)).length();
+
+		if (newDepth > 0)
+			smoothSurfRecurse(newDepth, n, frame);
+	}
+}
+
+void smoothSurfInterp(int numFrames, int *minFrames, int *boneIndices) {
+	siSkelSize = numFrames;
+	siTemp = new double[scMesh->numPts() * siSkelSize];
+
+	memset(siTemp, 0, sizeof(double) * scMesh->numPts() * siSkelSize);
+	siNeighbors = findTMNeighbors(scMesh);
+
+	int i, j;
+	for (i=0; i < scMesh->numPts(); i++) {
+		double recurseDepth = 0.05; // 0.03
+		char *name = scSkel->transforms.getT(boneIndices[minFrames[i]])->name;
+		if ((strncmp(name+1, "Clav", 4) == 0) ||
+			(strncmp(name, "chestT", 6) == 0) ||
+			(strncmp(name+1, "Pelvis", 6) == 0) ||
+			(strncmp(name, "abdomenT", 8) == 0))
+			recurseDepth = 0.10;
+
+//		recurseDepth = 0.05;
+		
+		smoothSurfRecurse(recurseDepth, i, minFrames[i]);
+	}
+
+	cout << "done recursive assignment" << endl;
+
+	// normalize
+	for (i=0; i < scMesh->numPts(); i++) {
+		int transInd = 0;
+		double sum = 0;
+
+		for (j=0; j < siSkelSize; j++) {
+			sum += siTemp[i * siSkelSize + j];
+		}
+
+		for (j=0; j < siSkelSize; j++)
+			scSkin.points[i].tWeights[j] = siTemp[i * siSkelSize + j] / sum;
+	}
+
+	delete []siTemp;
+	delete []siNeighbors;
+}
+
+void calcTransInfluences() {
+	int i, j;
+	int numBones;
+	int boneIndices[80];
+	int *minFrames;
+
+	// first off, determine the total number of bones
+	numBones = 0;
+	for (j=2; j < scSkel->transforms.size(); j++) {
+		SkelTransform *curTrans = scSkel->transforms.getT(j);
+		if (strcmp(curTrans->className, "SkelTranslation") != 0 && strcmp(curTrans->className, "SkelSymmetricTranslation") != 0)
+			continue;
+		boneIndices[numBones] = j;
+		numBones++;
+	}
+
+	// now, initialize each skin point to have a maximal # of influences...
+	for (i=0; i < scSkin.numPts; i++) {
+		scSkin.points[i].initTrans(numBones);
+
+		for (j=0; j < numBones; j++) {
+			scSkin.points[i].tWeights[j] = 0;
+			scSkin.points[i].tTransforms[j] = boneIndices[j];
+		}
+	}
+
+	// simple segmentation -- based on nearest bone
+	minFrames = new int[scMesh->numPts()];
+	for (i=0; i < scMesh->numPts(); i++) {
+		Vec3d curPt = scMesh->getPt(i);
+		Vec3d curNorm = scMesh->getPtNormal(i);
+		curNorm.normalize();
+
+//			searchMinSegment(0, 0, scSkel->transforms.getT(0)->globalCoord.v, scSkel);
+		double minDist;
+		int minFrame;
+		minDist = 1e6; 
+		minFrame = 0;
+		int boneIndex = 0;
+		for (j=2; j < scSkel->transforms.size(); j++) {
+			SkelTransform *curTrans = scSkel->transforms.getT(j);
+			if (strcmp(curTrans->className, "SkelTranslation") != 0 && strcmp(curTrans->className, "SkelSymmetricTranslation") != 0)
+				continue;
+			if ((strcmp(curTrans->name, "leftT") == 0) ||
+				(strcmp(curTrans->name, "rightT") == 0)) {
+				boneIndex++;
+				continue;
+			}
+
+			double adjustFactor = 0.15;
+			if (strcmp(curTrans->name, "neckT") == 0)
+				adjustFactor = 0;
+			if (strncmp(curTrans->name+1, "Hand", 4) == 0)
+				adjustFactor = 0;
+			if (strncmp(curTrans->name+1, "Shin", 4) == 0)
+				adjustFactor = 0.05;
+			if (strncmp(curTrans->name+1, "Clav", 4) == 0)
+				adjustFactor = 0.2;
+			if (strncmp(curTrans->name, "chestT", 6) == 0)
+				adjustFactor = 0.05;
+
+			Vec3d boneVec = curTrans->globalCoord.q.toMatrixD() * curTrans->curCoord.v;
+			double boneLen = boneVec.length();
+			boneVec /= boneLen;
+			Vec3d distV = (curTrans->globalCoord.v - curPt);
+			double linePos = (boneVec * distV);
+
+			scSkin.points[i].tPositions[boneIndex] = 1.0 - (linePos / boneLen);
+			if (scSkin.points[i].tPositions[boneIndex] < 0)
+				scSkin.points[i].tPositions[boneIndex] = 0;
+			if (scSkin.points[i].tPositions[boneIndex] > 1)
+				scSkin.points[i].tPositions[boneIndex] = 1;
+
+			if (linePos < 0) {
+				// distV already calculated
+			}
+			else if (linePos > boneLen) {
+				distV = curPt - (curTrans->globalCoord.v - boneVec * boneLen);
+			}
+			else {
+				distV = curPt - (curTrans->globalCoord.v - linePos * boneVec);
+			}
+
+			double d = distV.length();
+			distV.normalize();
+			double angleAdjust = distV * curNorm;
+			angleAdjust += 0.75;
+			if (angleAdjust > 0) {
+				angleAdjust = adjustFactor * angleAdjust;
+				d += angleAdjust;
+			}
+
+			if (d < minDist) {
+				minDist = d;
+				minFrame = boneIndex;
+				minFrames[i] = boneIndex;
+			}
+
+			boneIndex++;
+		}
+
+//			double totalWeight = 0;
+//			for (j=0; j < 3; j++)
+//				if (minDists[j] < 1e6)
+//					totalWeight += 1.0 / minDists[j];
+		if (minDist < 1e6) {
+			scSkin.points[i].tWeights[minFrame] = 1.0; //minDist;
+//			scMesh->evalPts[i].transInterp[j] = minDists[j]; //(1.0 / minDists[j]) / totalWeight;
+//			scMesh->evalPts[i].transFrame[j] = minFrames[j];
+		}
+	}
+
+	smoothSurfInterp(numBones, minFrames, boneIndices);
+
+	cout << "assigning colors..." << endl;
+	scMesh->gsPtColors(1);
+	scMesh->showColor = true;
+
+	for (i=0; i < scSkin.numPts; i++) {
+		Vec3d color;
+		for (j=0; j < numBones; j++) 
+			if (scSkin.points[i].tWeights[j] > 0)
+				color += scSkin.points[i].tWeights[j] *
+					scSkel->transforms.getT(scSkin.points[i].tTransforms[j])->color;
+		scMesh->getPtColor(i) = color;
+	}
+
+	delete []minFrames;
+}

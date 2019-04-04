@@ -1,0 +1,50 @@
+uStartSolver 31 {ITER}
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 15 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve.dat
+uStartSolver 1 {ITER}
+uStartSolver 2 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 4 {ITER}
+uStartSolver 8 {ITER}
+uStartSolver 16 {ITER}
+uStartSolver 31 {ITER}
+uAutoWeight
+uStartSolver 32 {ITER}
+uRenormalizeX
+uSaveSolve data/solve.dat
+// done

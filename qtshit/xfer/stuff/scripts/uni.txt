@@ -1,0 +1,44 @@
+//set RES mkr
+set RES 4k
+//set RES 8k
+//set RES mocap
+//set VER -m2
+//set VER -m0
+//set VER -f
+set VER -m
+uLoadExampleSet data/ex-{RES}{VER}.txt
+
+uLoadMu data/zero.txt
+//uLoadMu data/5rand.txt
+//uLoadMu data/mu-pca{VER}.txt
+//uLoadMu data/mu-4k{VER}.dat
+
+// phase 1
+//uLoadSolve data/solve-mkr{VER}.dat
+// phase 2
+//-uLoadPoses data/poses-mkr{VER}.dat
+//uLoadWeights data/weights-4k-painted.dat
+uLoadWeights data/weights-4k-m.dat
+//uLoadDress data/dress-4k{VER}.dat
+//uLoadWeights data/weights-painted-4k.dat data/j4km-8km.map
+// phase 3
+//uLoadPoses data/poses-mkr{VER}.dat
+//uLoadWeights data/weights-4k{VER}.dat data/j4km-8km.map
+//uLoadDress data/dress-4k{VER}.dat data/j4km-8km.map
+
+//uLoadMu data/char3.txt
+//uLoadPoses data/poses-8k-m0.dat 1
+//uLoadWeights data/weights-8k-m0.dat
+//uLoadDress data/dress-8k-m0.dat
+
+//uLoadSolve data/solve-8k-m.dat
+//uLoadSolve data/solve-mkr-m.dat
+//uLoadSolve data/solve-4k-m.dat
+//!pdds
+//!pdds
+//uLoadSolve data/solve-pdd.dat
+uShow 0
+uLoadWeights data/weights.dat
+uDressFromEx 0
+uLoadTex data/jhalf23.obj 1
+uLoadPddDefs data/pdds.txt

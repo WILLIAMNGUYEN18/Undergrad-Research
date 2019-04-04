@@ -1,0 +1,4 @@
+uLoadSolve data/solve-md7.dat
+uLoadWeights data/weights-md7.dat
+uShow 0
+uColor

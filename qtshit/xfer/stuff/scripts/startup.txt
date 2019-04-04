@@ -1,0 +1,14 @@
+vLoadView data/3-4view.ca.txt
+//x scripts/cvCloth.txt
+//x scripts/cvMatch.txt
+//x scripts/cvMatchAllCsr.txt
+//x scripts/cvLearn.txt
+//x scripts/ea.txt
+x scripts/unim.txt
+
+
+//scInitSCMesh data/2a-2k.ply data/2_A.po.txt data/2a-2k.ply
+//scCalcTransInfluences
+//scUpdateLocal
+//cvInitFromSkin 1
+//cvAutoUpdate

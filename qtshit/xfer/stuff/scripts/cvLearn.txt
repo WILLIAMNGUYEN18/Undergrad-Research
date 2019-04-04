@@ -1,0 +1,20 @@
+set RES 10k
+scInitSCMesh data/james-{RES}.ply ../posedata/ply/2_A.po.txt data/2a-{RES}.ply
+scCalcTransInfluences
+scUpdateLocal
+
+cvInitFromSkin 1
+cvAutoUpdate
+set ID 2
+
+//cvLoadMocap y:ianROM3.dof
+//cvMocapFrame 0
+
+cvLoadExampleSet data/set-{ID}-{RES}.txt 0 1
+//cvLoad data/cvlo{ID}.dat data/map-10k-50k.dat
+
+//cvLoadExampleSet data/set-male.txt 0 1
+//cvLoadExampleSet data/set-csr-lo.txt
+//cvLoadExampleSet data/set-temp.txt
+//cvRunEM 100
+//cvAnimPoses 1 0 10 3 10 5 20 27 30 9 40 11 50 15 60 17 70 19 80 21 90 23
