@@ -143,13 +143,13 @@ void updateLikelihood() {
 		for (i=0; i < numReducedPCA; i++) {
 			score += sqr(curPCA[i]) / variance[i];
 		}
-		mainWin->scoreVO->value(max(0,10-(0.1*score)));
+		mainWin->scoreVO->value(max(0.0,10-(0.1*score)));
 	}
 	else {
 		for (i=0; i < numReducedPCA; i++) {
 			score += sqr(pcaGF->vars[i]) / variance[i];
 		}
-		mainWin->pScoreVO->value(max(0,10-(0.1*score)));
+		mainWin->pScoreVO->value(max(0.0,10-(0.1*score)));
 	}
 }
 

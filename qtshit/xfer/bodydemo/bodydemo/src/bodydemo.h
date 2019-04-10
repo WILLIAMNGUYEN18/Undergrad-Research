@@ -5,12 +5,14 @@
 #include <math.h>
 #include <iostream>
 #include <vector>
-using namespace std;
 #include "vec.h"
 #include "mat.h"
 #include "quatnorm.h"
 #include "trimesh_render.h"
 #include "fast_trimesh.h"
+
+using namespace std;
+
 
 class MainWin;
 extern MainWin *mainWin;
