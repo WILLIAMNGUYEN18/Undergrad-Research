@@ -43,16 +43,18 @@
     <OutDir>Debug\</OutDir>
     <IntDir>Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>C:\Users\willi\Desktop\Programming\fltk-1.3.5\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>Release\</OutDir>
     <IntDir>Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <LibraryPath>C:\Users\willi\Desktop\Programming\fltk-1.3.5\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\local\fltk1.1.3\include\;.\src\;..\local\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\willi\Desktop\Programming\fltk-1.3.5;C:\Users\willi\Desktop\Programming\Undergrad-Research\qtshit\xfer\local2\fltk1.1.3;..\local\fltk1.1.3\include\;.\src\;..\local\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -63,7 +65,7 @@
       <DisableSpecificWarnings>4244;4018;4101;4312;4311;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libPEPCF90.lib;lbfgs.obj;fltk.lib;fltkgl.lib;glu32.lib;opengl32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libIEPCF90.lib;lbfgs.obj;fltk.lib;fltkgl.lib;glu32.lib;opengl32.lib;wsock32.lib;comctl32.lib;fltkd.lib;fltkjpegd.lib;fltkimagesd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)bodydemo.exe</OutputFile>
       <AdditionalLibraryDirectories>..\local\fltk1.1.3\lib\;..\local\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libcmt;libm;msvcrt;libc;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -75,7 +77,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\local\fltk1.1.3\include\;.\src\;..\local\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\willi\Desktop\Programming\fltk-1.3.5;C:\Users\willi\Desktop\Programming\Undergrad-Research\qtshit\xfer\local2\fltk1.1.3;..\local\fltk1.1.3\include\;.\src\;..\local\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -84,7 +86,7 @@
       <DisableSpecificWarnings>4244;4018;4101;4312;4311;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libPEPCF90.lib;lbfgs.obj;fltk.lib;fltkgl.lib;glu32.lib;opengl32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libIEPCF90.lib;lbfgs.obj;fltk.lib;fltkgl.lib;glu32.lib;opengl32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)bodydemo.exe</OutputFile>
       <AdditionalLibraryDirectories>..\local\fltk1.1.3\lib\;..\local\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libcmt;libm;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
