@@ -1,7 +1,25 @@
 #where the coordinate transform magic happens
 #2 * arctan(0.015 / (2 * 0.018)) in degrees
 #need to know focal length or sensor is ambiguous
+
+
+#[x][y][z][1]
+
+
+import math
+import numpy as np
 def worldToPixelCoords(T, fov, h, w, f, worldxyz1): 
+    #
+    TW = np.matmul(T,worldxyz1)
+    pixelSize = 2 * f * (math.tan(fov/2))
+    x = (f/TW[2]) * TW[0]
+    y = (f/TW[2]) * TW(1)
+
+    x = x / pixelSize
+    y = y / pixelSize
+
+    x += w/2
+    y += -h/2
     return
 #worldxyz1 = [x, y, z, 1.0] in world coords
 
