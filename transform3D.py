@@ -19,7 +19,8 @@ def worldToPixelCoords(T, fov, h, w, f, worldxyz1):
     y = y / pixelSize
 
     x += w/2
-    y += -h/2
+    y *= (-1)
+    y += h/2
     return
 #worldxyz1 = [x, y, z, 1.0] in world coords
 
