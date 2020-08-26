@@ -21,7 +21,7 @@ def worldToPixelCoords(T, fov, h, w, f, worldxyz1):
     x += w/2
     y *= (-1)
     y += h/2
-    return
+    return np.array([x,y])
 #worldxyz1 = [x, y, z, 1.0] in world coords
 
 #1. multiply worldxyz1 by T. T is the camera transform. It puts image in the correct viewing position of the camera (which is always at the origin looking down -Z)
