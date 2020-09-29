@@ -10,7 +10,7 @@ def cudaPlotSilhouette(png):
     #4 channel RGBA image represented as a numpy array
     #img[r,c] = [b, g, r, a], img[r,c,3] = alpha channel
     img = cv2.imread(png, -1)
-    print(str(img))
+    #print(str(img))
     plypoints = []
     #traverse array until you find a border pixel, i.e. pixel where any one of the 8 neighbors has an alpha value of 0
     #repeat until you get back to where you started:
@@ -46,22 +46,27 @@ def cudaPlotSilhouette(png):
     seen_points.add(first_border)
     point_list = []
     point_list.append(first_border)
+    pop_list = []
+    seen_list = []
 
     curr = first_border
 
+    firstPop = 0
 
     #Loop until we find first point again.
     while True:
         children = find_border_children(img, curr, bd)
 
         next = None
-        print("looping through children:" + str(children))
+        #print("looping through children:" + str(children))
         #it loops through all children not in seen_points, and then iterates through it, so it might be going in reverse order
         for i, child in enumerate(children):
             if child not in seen_points:
                 #print(str(i) + ": " + str(child))
                 # Found next point
                 next = child
+        
+        
         # Case where there are no children; we go backwards
         if next is None:
 
@@ -78,6 +83,11 @@ def cudaPlotSilhouette(png):
 
             # go back and get rid of last element
             curr = point_list.pop()
+            if(firstPop == 0):
+                firstPopVal = curr
+                firstPop = 1
+            pop_list.append(curr)
+            img = cv2.circle(img, (curr[1],curr[0]), 2, (0,0,255), 1)
 
 
         else:
@@ -85,21 +95,27 @@ def cudaPlotSilhouette(png):
             # Append and move on to next set of children
             point_list.append(next)
             seen_points.add(next)
+            seen_list.append(next)
             curr = next
-            img[next[0],next[1],0] = 0
-            img[next[0],next[1],1] = 0
-            img[next[0],next[1],2] = 255
+            #(image, center_coordinates, radius, color, thickness)
+            #img[next[0],next[1],0] = 0
+            #img[next[0],next[1],1] = 0
+            #img[next[0],next[1],2] = 255
 
     print( "border pixel found: " + str(curr))
+
+    print(pop_list)
+    print(len(pop_list))
     print("point list: ")
-    print(str(point_list))
+    print(str(len(point_list)))
+    print(str(firstPopVal))
     #cv2.imshow('image', img)
-    fileName = "C:\\Users\\Brilliance\\Desktop\\Projects\\Undergrad-Research\\findborder\\result.png"
+    fileName = "/homes/grail/iytian/findborder/result_circles.png"
     cv2.imwrite(fileName,img)
 
 # Find neighboring points that are also border pixels
 def find_border_children(img, point, bd):
-    print("Finding borders for point: (" + str(point[0]) + "," + str(point[1]) + ")")
+    #print("Finding borders for point: (" + str(point[0]) + "," + str(point[1]) + ")")
     border_pixels = []
     # Append them in the order starting from above, going counterclockwise.
     for i in range(0,8):
@@ -143,4 +159,4 @@ def points_in_range(p1, p2, bd):
     return False
 
 if __name__ == "__main__":
-    cudaPlotSilhouette("C:\\Users\\Brilliance\\Desktop\\Projects\\Undergrad-Research\\findborder\\mask0001.png")
+    cudaPlotSilhouette("/homes/grail/iytian/findborder/mask0002.png")
