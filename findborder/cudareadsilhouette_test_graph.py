@@ -42,20 +42,25 @@ def cudaPlotSilhouette(png):
     #east, southeast, south, southwest, west, northwest, north, northeast
     bd = [[0,1], [-1,1], [-1,0], [-1,-1], [0, -1], [1,-1], [1,0], [1,1]]
 
+
+    point_map = {}
     seen_points = set()
     seen_points.add(first_border)
     point_list = []
     point_list.append(first_border)
     pop_list = []
     seen_list = []
+    streak_pop = []
 
     curr = first_border
 
-    firstPop = 0
+    nonStreakPop = True
 
     #Loop until we find first point again.
     while True:
         children = find_border_children(img, curr, bd)
+
+        point_map[curr] = children
 
         next = None
         #print("looping through children:" + str(children))
@@ -83,12 +88,10 @@ def cudaPlotSilhouette(png):
 
             # go back and get rid of last element
             curr = point_list.pop()
-            if(firstPop == 0):
-                firstPopVal = curr
-                firstPop = 1
+            if(nonStreakPop):
+                streak_pop.append(curr)
+                nonStreakPop = False
             pop_list.append(curr)
-            
-
 
         else:
             # Found next point
@@ -97,17 +100,16 @@ def cudaPlotSilhouette(png):
             seen_points.add(next)
             seen_list.append(next)
             curr = next
+            if(nonStreakPop == False):
+                nonStreakPop = True
 
 
     print( "border pixel found: " + str(curr))
-
-
-    print(seen_list)
-    #print(pop_list)
+    #print(seen_list)
     print(len(pop_list))
-    #print("point list: ")
-    print(str(len(point_list)))
-    print(str(firstPopVal))
+    print(len(point_list))
+    print(len(streak_pop))
+    print(point_map)
     num = 1
     for p in seen_list:
         img = cv2.circle(img, (p[1],p[0]), 20, (0,255,255), 1)

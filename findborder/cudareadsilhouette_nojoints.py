@@ -225,4 +225,4 @@ def points_in_range(p1, p2, bd):
 ##takes a png file with an alpha channel and plots it to a ply file scaled to the subject's known height.
 #def cudaPlotSilhouette(png, flength, hsense):
 if __name__ == "__main__":
-    cudaPlotSilhouette("/homes/grail/iytian/findborder/mask0001.png", 0.018, 0.0225)
+    cudaPlotSilhouette("C:\\Users\\Brilliance\\Desktop\\Projects\\Undergrad-Research\\findborder\\mask0001.png", 0.018, 0.0225)
