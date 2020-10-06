@@ -102,18 +102,25 @@ def cudaPlotSilhouette(png):
     print( "border pixel found: " + str(curr))
 
 
-    print(seen_list)
+    #print(seen_list)
     #print(pop_list)
-    print(len(pop_list))
+    #print(len(pop_list))
     #print("point list: ")
-    print(str(len(point_list)))
-    print(str(firstPopVal))
-    num = 1
+    #print(str(len(point_list)))
+    #print(str(firstPopVal))
+    
+    print("Re-Alpha")
+    #set all values to alpha 1
+    for r in range(0, img.shape[0]):
+        for c in range(0, img.shape[1]):
+            img[r,c,3] = 1
+
+    print("Drawing Circles")
+    
     for p in seen_list:
-        img = cv2.circle(img, (p[1],p[0]), 20, (0,255,255), 1)
-        num = num + 1
+        img = cv2.circle(img, (p[1],p[0]), 5, (0,0,255), 1)
     #cv2.imshow('image', img)
-    fileName = "C:\\Users\\Brilliance\\Desktop\\Projects\\Undergrad-Research\\findborder\\result_circles.png"
+    fileName = "C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\result5.png"
     cv2.imwrite(fileName,img)
 
 # Find neighboring points that are also border pixels
@@ -162,4 +169,4 @@ def points_in_range(p1, p2, bd):
     return False
 
 if __name__ == "__main__":
-    cudaPlotSilhouette("C:\\Users\\Brilliance\\Desktop\\Projects\\Undergrad-Research\\findborder\\mask0002.png")
+    cudaPlotSilhouette("C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\mask0002.png")
