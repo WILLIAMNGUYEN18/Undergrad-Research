@@ -5,79 +5,53 @@ import sys
 import struct
 
 #takes a png file with an alpha channel and plots it to a ply file scaled to the subject's known height.
-def cudaPlotSilhouette(png):
+def cudaPlotSilhouette(png1, png2):
 
     #4 channel RGBA image represented as a numpy array
     #img[r,c] = [b, g, r, a], img[r,c,3] = alpha channel
-    img = cv2.imread(png, -1)
+    img1 = cv2.imread(png1, -1)
+    img2 = cv2.imread(png2, -1)
+
     plypoints = []
 
     # Used to loop through neighbors, counterclockwise
     #row,column, (Y,X)
     #east, southeast, south, southwest, west, northwest, north, northeast
     bd = [[0,1], [-1,1], [-1,0], [-1,-1], [0, -1], [1,-1], [1,0], [1,1]]
-    point_map = {}
-    first = True
+    png1_list = []
+    png2_list = []
     
-    print("Generating Graph")
+    print("Generating Lists")
     #iterate through the entire map to create a full graph. We can use find_border_children and add them to the map
     #this will allow us to find a comprehensive graph/mapping that we can iterate through
     #let's still store first point as a starting point for the loop
-    for r in range(0, img.shape[0]):
-        for c in range(0, img.shape[1]):
+    for r in range(0, img1.shape[0]):
+        for c in range(0, img1.shape[1]):
             currP = (r,c)
             #if alpha value 1 (border)
             #find all borders around this one and map it
-            if img[r,c,3] != 0 and is_border_pixel(img,currP, bd):
-                
-                if(first):
-                    firstPoint = currP
-                    first = False
-                children = find_border_children(img, currP, bd)
-                point_map[currP] = children
-    if firstPoint is None:
-        print("No pixel values with value 1")
-        exit()
+            if img1[r,c,3] != 0 and is_border_pixel(img1,currP, bd):
+                png1_list.append(currP)
 
-    seen_points = set()
-    seen_points.add(firstPoint)
-    currPoint = firstPoint
-    point_list = []
+    for r in range(0, img2.shape[0]):
+        for c in range(0, img2.shape[1]):
+            currP = (r,c)
+            #if alpha value 1 (border)
+            #find all borders around this one and map it
+            if img2[r,c,3] != 0 and is_border_pixel(img2,currP, bd):
+                png2_list.append(currP)
 
+    print("Comparing:")
+    print(Diff(png1_list,png2_list))
+    #list(set(li1)-set(li2))
+    #list(set(li2)-set(li1))
+    print("Exclusive to mask 1")
+    print(list(set(png1_list) - set(png2_list)))
+    print("Exclusive to mask 2")
+    print(list(set(png2_list) - set(png1_list)))
 
-    print("Exploring graph")
-    #Calvin implementation with direction reversed
-    #his was supposed to be clockwise but it went reverse
-    while True:
-        next = None
-        currChildren = point_map[currPoint]
-        for i, child in enumerate(currChildren):
-            if child not in seen_points:
-                next = child
-                break
-        if next is None:
-            if points_in_range(firstPoint, currPoint, bd):
-                break
-            if len(point_list) == 1:
-                print("first_border is the only pixel with alpha = 1 in range")
-                exit()
-            currPoint = point_list.pop()   
-        else:
-            point_list.append(next)
-            seen_points.add(next)
-            currPoint = next
-
-
-    print(point_map)
-    #print(len(point_map.keys()))
-    #print(len(point_map.values()))
-    print(point_list)
-    print("point_map size: " + str(len(point_map)))
-    print("point_list size: " + str(len(point_list)))
-    print("first pixel: " + str(firstPoint))
-    print("last pixel: " + str(currPoint))
     fileName = "C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\result_graph.png"
-    cv2.imwrite(fileName,img)
+    cv2.imwrite(fileName,img1)
 
 # Find neighboring points that are also border pixels
 def find_border_children(img, point, bd):
@@ -124,7 +98,10 @@ def points_in_range(p1, p2, bd):
 
     return False
 
+def Diff(li1, li2): 
+    return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))     
+
 #C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\mask0002.png
 #C:\\Users\\Brilliance\\Desktop\\Projects\\Undergrad-Research\\findborder\\mask0002.png
 if __name__ == "__main__":
-    cudaPlotSilhouette("C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\mask0001.png")
+    cudaPlotSilhouette("C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\mask0001.png","C:\\Users\\willi\\Desktop\\Programming\\Undergrad-Research\\findborder\\mask0002.png")
