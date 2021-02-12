@@ -15,8 +15,9 @@ def mean(value):
 
 
 input_dir = sys.argv[1]
+input_dir2 = sys.argv[2]
 print("input dir: " + input_dir)
-plys = sorted(glob.glob(input_dir + "/*.ply"))
+plys = sorted(glob.glob(input_dir + "/*.ply") + glob.glob(input_dir2 + "/*.ply"))
 #print("ply files: " + plys)
 
 #O:\unix\projects\grail\iytian\separatepcperdevice_102920\dxa\SUQ4_DXA_200421.csv
@@ -60,7 +61,7 @@ for mesh in plys:
     print(mesh)
     #parse for subject id with -1 being last token(filename) [0:-4 drops the .ply]
     #need '\\' for windows and '/' for linux
-    subject = mesh.split('\\')[-1][0:-4]
+    subject = mesh.split('/')[-1][0:-4]
     print("subject")
     print(subject)
 
