@@ -10,25 +10,33 @@ from datetime import date
 from scipy import stats
 
 def standarddeviation(value):
-    print(str(np.format_float_positional(np.std(np.array(value)), 3)))
+    print(str(np.format_float_positional(np.std(np.array(value)), 2)))
 def mean(value):
-    print(str(np.format_float_positional(np.mean(np.array(value)), 3)))
+    print(str(np.format_float_positional(np.mean(np.array(value)), 2)))
 def max(value):
-    print(str(np.format_float_positional(np.max(np.array(value)), 3)))
+    print(str(np.format_float_positional(np.max(np.array(value)), 2)))
 def min(value):
-    print(str(np.format_float_positional(np.min(np.array(value)), 3)))
+    print(str(np.format_float_positional(np.min(np.array(value)), 2)))
 def pval(train,test):
-    print(str(stats.ttest_ind(train, test)[1]))
+    print(str(np.format_float_positional(float(stats.ttest_ind(train, test)[1]),2)) )
 
 def scan_age(birthdate, scandate):
     barray = birthdate.split('/')
     sarray = scandate.split('/')
     print(str(barray))
     print(str(sarray))
+    print(barray[0])
+    print(barray[1])
+    print(barray[2])
+    #def calculate_age(born):
+    #    today = date.today()
+    #    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    #month [0]/day [1]/year [2]
     #year/month/day
-    bday = date(int(barray[2]), int(barray[1]), int(barray[0]))
-    sday = date(int(sarray[2]), int(sarray[1]), int(sarray[0]))
-    return (sday - bday).year 
+    #bday = date(int(barray[2]), int(barray[0]), int(barray[1]))
+    #sday = date(int(sarray[2]), int(sarray[0]), int(sarray[1]))
+    #return scandate.year - birthdate.year - 
+    return int(sarray[2]) - int(barray[2]) - ((int(sarray[0]), int(sarray[1])) < (int(barray[0]), int(barray[1])))
 
 
 dir_train = sys.argv[1]
