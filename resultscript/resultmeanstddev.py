@@ -182,8 +182,8 @@ for mesh in plys_test:
     currHeight_test = float(dxacsv[idx][labels.index("HEIGHT")]) / 100.0
     fMass_test = float(dxacsv[idx][labels.index("WBTOT_FAT")]) / 1000.0
     lMass_test = float(dxacsv[idx][labels.index("WBTOT_LEAN")]) / 1000.0
-    FMI_test.append(fMass / (currHeight * currHeight))
-    FFMI_test.append(lMass / (currHeight * currHeight))
+    FMI_test.append(fMass_test / (currHeight_test * currHeight_test))
+    FFMI_test.append(lMass_test / (currHeight_test * currHeight_test))
 
 
 
