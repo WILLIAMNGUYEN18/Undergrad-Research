@@ -6,18 +6,38 @@ from subprocess import Popen
 import glob
 import fnmatch
 from os import path
+from datetime import date
 
 def standarddeviation(value):
     print(str(np.format_float_positional(np.std(np.array(value)), 3)))
 def mean(value):
     print(str(np.format_float_positional(np.mean(np.array(value)), 3)))
+def max(value):
+    print(str(np.format_float_positional(np.max(np.array(value)), 3)))
+def min(value):
+    print(str(np.format_float_positional(np.min(np.array(value)), 3)))
+
+def scan_age(birthdate, scandate):
+    barray = birthdate.split('/')
+    sarray = scandate.split('/')
+
+    print(str(barray))
+    print(str(sarray))
+    #year/month/day
+
+    bday = date(int(barray[2]), int(barray[1]), int(barray[0]))
+    sday = date(int(sarray[2]), int(sarray[1]), int(sarray[0]))
+    return (sday - bday).year 
 
 
+dir_train = sys.argv[1]
+dir_bootstrap = sys.argv[2]
+dir_test = sys.argv[3]
+print("train dir: " + dir_train)
+print("bootstrap dir: " + dir_bootstrap)
+print("test dir: "+ dir_test)
+plys = sorted(glob.glob(dir_train + "/*.ply") + glob.glob(dir_bootstrap + "/*.ply"))
 
-input_dir = sys.argv[1]
-input_dir2 = sys.argv[2]
-print("input dir: " + input_dir)
-plys = sorted(glob.glob(input_dir + "/*.ply") + glob.glob(input_dir2 + "/*.ply"))
 #print("ply files: " + plys)
 
 #O:\unix\projects\grail\iytian\separatepcperdevice_102920\dxa\SUQ4_DXA_200421.csv
@@ -43,6 +63,11 @@ for r in range(0, rows):
     subject_ids.append(dxacsv[r][sid_idx])
 
 #initialize all the arrays outside of the loop
+age = []
+height = []
+mass = []
+BMI = []
+
 percentFat = []
 leanMass = []
 fatMass = []
@@ -55,6 +80,9 @@ legFat = []
 armFat = []
 FMI = []
 FFMI = []
+
+
+
 
 for mesh in plys:
     print("mesh")
@@ -73,6 +101,12 @@ for mesh in plys:
     print("index in dxacsv: " + str(idx))    
     #subj_fatMass = float(dxacsv[idx][labels.index("")])
     #print("Appending to percentFat: " + dxacsv[idx][labels.index("WBTOT_PFAT")])
+
+
+    height.append(float(dxacsv[idx][labels.index("HEIGHT")]) / 100.0)
+    mass.append(float(dxacsv[idx][labels.index("WBTOT_MASS")]) / 1000.0)
+    age.append()
+
     percentFat.append(float(dxacsv[idx][labels.index("WBTOT_PFAT")]))
     leanMass.append(float(dxacsv[idx][labels.index("WBTOT_LEAN")]) / 1000.0)
     fatMass.append(float(dxacsv[idx][labels.index("WBTOT_FAT")]) / 1000.0)
@@ -83,11 +117,44 @@ for mesh in plys:
     trunkFat.append(float(dxacsv[idx][labels.index("TRUNK_FAT")]) / 1000.0)
     legFat.append(float(dxacsv[idx][labels.index("LEG_FAT")]) / 1000.0)
     armFat.append(float(dxacsv[idx][labels.index("ARM_FAT")]) / 1000.0)
-    height = float(dxacsv[idx][labels.index("HEIGHT")]) / 100.0
+    currHeight = float(dxacsv[idx][labels.index("HEIGHT")]) / 100.0
     fMass = float(dxacsv[idx][labels.index("WBTOT_FAT")]) / 1000.0
     lMass = float(dxacsv[idx][labels.index("WBTOT_LEAN")]) / 1000.0
-    FMI.append(fMass / (height * height))
-    FFMI.append(lMass / (height * height))
+    FMI.append(fMass / (currHeight * currHeight))
+    FFMI.append(lMass / (currHeight * currHeight))
+
+
+    
+plys_test = sorted(glob.glob(dir_test + "/*.ply"))
+
+age_test = []
+height_test = []
+mass_test = []
+BMI_test = []
+
+percentFat_test = []
+leanMass_test = []
+fatMass_test = []
+viscFat_test = []
+legLean_test = []
+armLean_test = []
+trunkLean_test = []
+trunkFat_test = []
+legFat_test = []
+armFat_test = []
+FMI_test = []
+FFMI_test = []
+for mesh in plys:
+    print("mesh")
+    print(mesh)
+    subject = mesh.split('/')[-1][0:-4]
+    print("subject")
+    print(subject)
+    sid = subject.split('_')[0]
+    print("sid: " + sid)
+    idx = subject_ids.index(sid)
+    print("index in dxacsv: " + str(idx))
+
 
 
 #np.format_float_positional(np.mean())
@@ -117,6 +184,9 @@ standarddeviation(legFat)
 standarddeviation(armFat)
 standarddeviation(FMI)
 standarddeviation(FFMI)
+print("\nMax")
+
+print("\nMin")
 
 
 
