@@ -28,26 +28,33 @@ def scan_age(birthdate, scandate):
     print(barray[0])
     print(barray[1])
     print(barray[2])
-    #def calculate_age(born):
-    #    today = date.today()
-    #    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
-    #month [0]/day [1]/year [2]
-    #year/month/day
-    #bday = date(int(barray[2]), int(barray[0]), int(barray[1]))
-    #sday = date(int(sarray[2]), int(sarray[0]), int(sarray[1]))
-    #return scandate.year - birthdate.year - 
     return int(sarray[2]) - int(barray[2]) - ((int(sarray[0]), int(sarray[1])) < (int(barray[0]), int(barray[1])))
 
-
 dir_train = sys.argv[1]
-dir_bootstrap = sys.argv[2]
+dir_train2 = sys.argv[2]
+dir_train3 = sys.argv[3]
 
+dir_bootstrap = sys.argv[4]
+dir_bootstrap2 = sys.argv[5]
+dir_bootstrap3 = sys.argv[6]
 
-dir_test = sys.argv[3]
+dir_test = sys.argv[7]
+dir_test2 = sys.argv[8]
+dir_test3 = sys.argv[9]
+
 print("train dir: " + dir_train)
 print("bootstrap dir: " + dir_bootstrap)
 print("test dir: "+ dir_test)
-plys = sorted(glob.glob(dir_train + "/*.ply") + glob.glob(dir_bootstrap + "/*.ply"))
+print("train dir: " + dir_train2)
+print("bootstrap dir: " + dir_bootstrap2)
+print("test dir: "+ dir_test2)
+print("train dir: " + dir_train3)
+print("bootstrap dir: " + dir_bootstrap3)
+print("test dir: "+ dir_test3)
+
+
+
+plys = sorted(glob.glob(dir_train + "/*.ply") + glob.glob(dir_train2 + "/*.ply") + glob.glob(dir_train3 + "/*.ply") +  glob.glob(dir_bootstrap + "/*.ply") + glob.glob(dir_bootstrap2 + "/*.ply") + glob.glob(dir_bootstrap3 + "/*.ply"))
 
 #print("ply files: " + plys)
 
@@ -137,7 +144,7 @@ for mesh in plys:
 
 
     
-plys_test = sorted(glob.glob(dir_test + "/*.ply"))
+plys_test = sorted(glob.glob(dir_test + "/*.ply") + glob.glob(dir_test2 + "/*.ply") + glob.glob(dir_test3 + "/*.ply"))
 
 age_test = []
 height_test = []
@@ -265,7 +272,7 @@ min(armFat)
 min(FMI)
 min(FFMI)
 
-
+print("\nCount: " + str(len(plys)))
 
 print("\n\nTest")
 print("\nMean")
@@ -361,6 +368,7 @@ pval(armFat, armFat_test)
 pval(FMI, FMI_test)
 pval(FFMI, FFMI_test)
 
+print("\nCount: " + str(len(plys_test)))
 
 
 
